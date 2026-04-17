@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"path": "../ry"
+		},
+		{
+			"path": "."
+		},
+		{
+			"path": "../socketControlMain-golang"
+		},
+		{
+			"path": "../mall"
+		}
+	]
+}

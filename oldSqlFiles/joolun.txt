@@ -1,0 +1,86 @@
+CREATE TABLE IF NOT EXISTS optometry_records (    
+    optometry_records_id bigint(20) AUTO_INCREMENT PRIMARY KEY COMMENT '验光记录ID',  
+    create_time datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建日期',    
+    update_time datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',   
+    customer_id bigint(20) COMMENT '顾客ID',    
+    customer_name VARCHAR(255) NOT NULL COMMENT '顾客姓名',    
+    optometrist_id bigint(20) NOT NULL COMMENT '验光师ID',    
+    optometrist_name VARCHAR(255) COMMENT '验光师姓名',    
+    store_id bigint(20) NOT NULL COMMENT '门店ID',    
+    store_name VARCHAR(255) NOT NULL COMMENT '门店名称',    
+    store_phone VARCHAR(20) NOT NULL COMMENT '门店电话'  
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='验光记录表';  
+  
+CREATE TABLE optometry_data (  
+    optometry_id bigint(20) AUTO_INCREMENT PRIMARY KEY COMMENT '眼镜验光ID',  
+    optometry_records_id bigint(20) COMMENT '验光记录ID',  
+    create_time datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建日期',    
+    update_time datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',    
+    spherical_mirror VARCHAR(50) COMMENT '球镜数据',  
+    cylindrical_mirror VARCHAR(50) COMMENT '柱镜数据',  
+    position_of_axis VARCHAR(50) COMMENT '轴位数据',  
+    addend VARCHAR(50) COMMENT 'ADD数据',  
+    distance_of_pupil VARCHAR(50) COMMENT '瞳距数据',  
+    horizontal_prism VARCHAR(50) COMMENT '水平棱镜数据',  
+    vertical_prism VARCHAR(50) COMMENT '垂直棱镜数据',  
+    type int(1) NOT NULL COMMENT '分类数据（1=电脑验光仪，2=查片仪，3=验光头，4=最终配镜）',  
+    near_far int(1) COMMENT '远近数据（0=远，1=近）',  
+    left_right_eyes int(1) NOT NULL COMMENT '左右眼数据（0=左眼，1=右眼）',  
+    FOREIGN KEY (optometry_records_id) REFERENCES optometry_records(optometry_records_id) ON DELETE CASCADE ON UPDATE CASCADE  
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='眼镜验光数据表';
+
+
+
+
+
+
+
+CREATE TABLE IF NOT EXISTS `vision_test_results` (
+  `results_id` INT AUTO_INCREMENT PRIMARY KEY, -- 主键ID
+  `optometry_records_id` bigint(20) COMMENT '验光记录ID', 
+   `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建日期',  
+   `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间', 
+  `ww4points` VARCHAR(50) DEFAULT NULL COMMENT '沃氏4点', -- 沃氏4点
+  `stereo_view` VARCHAR(50) DEFAULT NULL COMMENT '立体观', -- 立体观
+  `vgf_bi` VARCHAR(50) DEFAULT NULL COMMENT '隐斜（远）BI', -- 隐斜（远）BI
+  `vgf_bu` VARCHAR(50) DEFAULT NULL COMMENT '隐斜（远）BU', -- 隐斜（远）BU
+  `pnif_bi_1` VARCHAR(50) DEFAULT NULL COMMENT '正负融像（远）BI1', -- 正负融像（远）BI1
+  `pnif_bi_2` VARCHAR(50) DEFAULT NULL COMMENT '正负融像（远）BI2', -- 正负融像（远）BI2
+  `pnif_bi_3` VARCHAR(50) DEFAULT NULL COMMENT '正负融像（远）BI3', -- 正负融像（远）BI3
+  `pnif_bu_1` VARCHAR(50) DEFAULT NULL COMMENT '正负融像（远）BU1', -- 正负融像（远）BU1
+  `pnif_bu_2` VARCHAR(50) DEFAULT NULL COMMENT '正负融像（远）BU2', -- 正负融像（远）BU2
+  `pnif_bu_3` VARCHAR(50) DEFAULT NULL COMMENT '正负融像（远）BU3', -- 正负融像（远）BU3
+  `vgn_bi` VARCHAR(50) DEFAULT NULL COMMENT '隐斜（近）BI', -- 隐斜（近）BI
+  `vgn_bu` VARCHAR(50) DEFAULT NULL COMMENT '隐斜（近）BU', -- 隐斜（近）BU
+  `aca` VARCHAR(50) DEFAULT NULL COMMENT '梯度法', -- 梯度法
+  `pnin_bi_1` VARCHAR(50) DEFAULT NULL COMMENT '正负融像（近）BI1', -- 正负融像（近）BI1
+  `pnin_bi_2` VARCHAR(50) DEFAULT NULL COMMENT '正负融像（近）BI2', -- 正负融像（近）BI2
+  `pnin_bi_3` VARCHAR(50) DEFAULT NULL COMMENT '正负融像（近）BI3', -- 正负融像（近）BI3
+  `pnin_bu_1` VARCHAR(50) DEFAULT NULL COMMENT '正负融像（近）BU1', -- 正负融像（近）BU1
+  `pnin_bu_2` VARCHAR(50) DEFAULT NULL COMMENT '正负融像（近）BU2', -- 正负融像（近）BU2
+  `pnin_bu_3` VARCHAR(50) DEFAULT NULL COMMENT '正负融像（近）BU3', -- 正负融像（近）BU3
+  `nra` VARCHAR(50) DEFAULT NULL COMMENT '负相对调节NRA', -- 负相对调节NRA
+  `bcc` VARCHAR(255) DEFAULT NULL COMMENT '调节反应BCC', -- 调节反应BCC
+  `pra` VARCHAR(255) DEFAULT NULL COMMENT '正相对调节PRA', -- 正相对调节PRA
+  `reverse_beat` VARCHAR(50) DEFAULT NULL COMMENT '反转拍', -- 反转拍
+  `visual_chart` VARCHAR(50) DEFAULT NULL COMMENT '视力表', -- 视力表
+  `binoculus` VARCHAR(50) DEFAULT NULL COMMENT '双眼', -- 双眼
+  `left_eye` VARCHAR(50) DEFAULT NULL COMMENT '左眼', -- 左眼
+  `right_eye` VARCHAR(50) DEFAULT NULL COMMENT '右眼', -- 右眼
+  `diagnosis_name` BIGINT(20) DEFAULT NULL COMMENT '诊断名称', -- 诊断名称
+  `diagnosis_abnormal` VARCHAR(50) DEFAULT NULL COMMENT '诊断异常名称', -- 诊断异常名称
+  `rests` VARCHAR(255) DEFAULT NULL COMMENT '其他', -- 其他
+  `sugggestions` VARCHAR(255) DEFAULT NULL COMMENT '建议方案' -- 建议方案
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4 COMMENT='视图验光数据表';
+
+
+
+CREATE TABLE IF NOT EXISTS `try_optometry` (
+  `try_optometry_id` INT AUTO_INCREMENT PRIMARY KEY COMMENT '主键ID', -- 主键ID
+  `results_id` BIGINT(20) DEFAULT NULL COMMENT '视图验光id', -- 视图验光id
+  `left_right_eyes` INT DEFAULT NULL COMMENT '左右眼睛（0左，1右）', -- 左右眼睛（0左，1右）
+  `spherical_mirror` VARCHAR(50) DEFAULT NULL COMMENT '球镜', -- 球镜
+  `cylindrical_mirror` VARCHAR(50) DEFAULT NULL COMMENT '柱镜', -- 柱镜
+  `position_of_axis` VARCHAR(50) DEFAULT NULL COMMENT '轴位', -- 轴位
+  `addend` VARCHAR(50) DEFAULT NULL COMMENT 'ADD' -- ADD
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4 COMMENT='试戴验光表';

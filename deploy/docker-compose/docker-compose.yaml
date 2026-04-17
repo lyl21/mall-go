@@ -49,6 +49,7 @@ services:
       network:
         ipv4_address: 177.7.0.12
     volumes:
+    - ../../server/config.docker.yaml:/go/src/github.com/flipped-aurora/gin-vue-admin/server/config.docker.yaml:ro
       - /home/wxPay/apiclient_cert.p12:/go/src/github.com/flipped-aurora/gin-vue-admin/server/apiclient_cert.p12
       - /home/wxPay/apiclient_key.pem:/go/src/github.com/flipped-aurora/gin-vue-admin/server/apiclient_key.pem
 
@@ -60,12 +61,12 @@ services:
     ports:
       - "13306:3306"  # host物理直接映射端口为13306
     environment:
-      #MYSQL_ROOT_PASSWORD: 'Aa@6447985' # root管理员用户密码
+      MYSQL_ROOT_PASSWORD: 'Xm@123456' # root管理员用户密码
       MYSQL_DATABASE: 'gva' # 初始化启动时要创建的数据库的名称
-      MYSQL_USER: 'root'
-      MYSQL_PASSWORD: '1234567890'
+      # MYSQL_USER: 'root'
+      # MYSQL_PASSWORD: '1234567890'
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p1234567890"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-pXm@123456"]
       interval: 10s
       timeout: 5s
       retries: 3

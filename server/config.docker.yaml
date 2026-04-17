@@ -104,7 +104,7 @@ mysql:
     config: charset=utf8mb4&parseTime=True&loc=Local
     db-name: "gva"
     username: "root"
-    password: "1234567890"
+    password: "Xm@123456"
     max-idle-conns: 10
     max-open-conns: 100
     log-mode: ""

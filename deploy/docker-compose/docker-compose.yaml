@@ -49,7 +49,7 @@ services:
       network:
         ipv4_address: 177.7.0.12
     volumes:
-    - ../../server/config.docker.yaml:/go/src/github.com/flipped-aurora/gin-vue-admin/server/config.docker.yaml:ro
+    - ../../server/config.docker.yaml:/go/src/github.com/flipped-aurora/gin-vue-admin/server/config.docker.yaml
       - /home/wxPay/apiclient_cert.p12:/go/src/github.com/flipped-aurora/gin-vue-admin/server/apiclient_cert.p12
       - /home/wxPay/apiclient_key.pem:/go/src/github.com/flipped-aurora/gin-vue-admin/server/apiclient_key.pem
 

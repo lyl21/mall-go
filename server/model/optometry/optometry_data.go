@@ -15,6 +15,7 @@ type OptometryData struct {
 	HorizontalPrism    string          `json:"horizontalPrism" gorm:"column:horizontal_prism;type:varchar(50);default:'0.0';comment:水平棱镜数据"`
 	VerticalPrism      string          `json:"verticalPrism" gorm:"column:vertical_prism;type:varchar(50);default:'0.0';comment:垂直棱镜数据"`
 	Type               int             `json:"type" gorm:"column:type;type:int(1);not null;comment:分类数据（1=电脑验光仪，2=查片仪，3=验光头，4=最终配镜）"`
+	TypeName           string          `json:"typeName" gorm:"-"`
 	NearFar            *int            `json:"nearFar" gorm:"column:near_far;type:int(1);comment:远近数据（0=远，1=近）"`
 	LeftRightEyes      int             `json:"leftRightEyes" gorm:"column:left_right_eyes;type:int(1);not null;comment:左右眼数据（0=左眼，1=右眼）"`
 }

@@ -6,6 +6,7 @@ import (
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/common/response"
 	"github.com/flipped-aurora/gin-vue-admin/server/utils"
+	"github.com/flipped-aurora/gin-vue-admin/server/wsmanager"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )
@@ -207,13 +208,13 @@ func (a *MiniRemoteApi) RemoteDoorOpen(c *gin.Context) {
 // @Router    /weixin/api/ma/remote/health [get]
 func (a *MiniRemoteApi) GetRemoteOptometryHealth(c *gin.Context) {
 	// 检查WebSocket管理器状态
-	if utils.RemoteOptometryManager == nil {
+	if wsmanager.WSManager == nil {
 		response.FailWithMessage("远程验光服务未初始化", c)
 		return
 	}
 
 	// 获取统计信息
-	stats := utils.RemoteOptometryManager.GetStats()
+	stats := wsmanager.WSManager.GetStats()
 
 	response.OkWithData(gin.H{
 		"status":    "healthy",
@@ -229,12 +230,12 @@ func (a *MiniRemoteApi) GetRemoteOptometryHealth(c *gin.Context) {
 // @Success   200  {object}  response.Response{data=map[string]interface{}}  "获取成功"
 // @Router    /weixin/api/ma/remote/stats [get]
 func (a *MiniRemoteApi) GetRemoteOptometryStats(c *gin.Context) {
-	if utils.RemoteOptometryManager == nil {
+	if wsmanager.WSManager == nil {
 		response.FailWithMessage("远程验光服务未初始化", c)
 		return
 	}
 
-	stats := utils.RemoteOptometryManager.GetStats()
+	stats := wsmanager.WSManager.GetStats()
 
 	response.OkWithData(stats, c)
 }

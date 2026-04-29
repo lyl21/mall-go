@@ -129,13 +129,17 @@ func (s *StoreApi) GetMxStore(c *gin.Context) {
 // @Router    /store/mxStoreList [get]
 func (s *StoreApi) GetMxStoreList(c *gin.Context) {
 	var pageInfo request.PageInfo
-	var search string
+	var search storeModel.MxStore
 	err := c.ShouldBindQuery(&pageInfo)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	search = c.Query("search")
+	// 绑定搜索参数
+	search.StoreNameEnglish = c.Query("storeNameEnglish")
+	search.BrandId = c.Query("brandId")
+	search.StoreNumber = c.Query("storeNumber")
+	search.StorePhone = c.Query("storePhone")
 	list, total, err := storeService.GetMxStoreList(pageInfo, search)
 	if err != nil {
 		global.GVA_LOG.Error("获取失败!", zap.Error(err))

@@ -56,6 +56,12 @@ func (s *UserService) GetMxUser(id int64) (user storeModel.MxUser, err error) {
 func (s *UserService) GetMxUserList(info request.PageInfo, search string) (list interface{}, total int64, err error) {
 	limit := info.PageSize
 	offset := info.PageSize * (info.Page - 1)
+	
+	// 如果 pageSize 为 0，则不分页，返回所有数据
+	if limit == 0 {
+		limit = 10000
+	}
+	
 	db := global.GVA_DB.Model(&storeModel.MxUser{}).Where("is_delete = ?", 0)
 	if search != "" {
 		db = db.Where("name LIKE ? OR phone_number LIKE ?", "%"+search+"%", "%"+search+"%")
@@ -67,4 +73,9 @@ func (s *UserService) GetMxUserList(info request.PageInfo, search string) (list 
 	var userList []storeModel.MxUser
 	err = db.Limit(limit).Offset(offset).Find(&userList).Error
 	return userList, total, err
+}
+
+func (s *UserService) GetMxUserByPhone(phoneNumber string) (user storeModel.MxUser, err error) {
+	err = global.GVA_DB.Where("phone_number = ? AND is_delete = ?", phoneNumber, 0).First(&user).Error
+	return
 }

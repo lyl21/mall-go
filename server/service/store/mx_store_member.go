@@ -60,11 +60,30 @@ func (s *StoreMemberService) GetMxStoreMember(storeId int64, userId int64) (memb
 	return
 }
 
+func (s *StoreMemberService) GetMxStoreMemberByStoreIdUserIdPost(storeId int64, userId int64, post int) (member storeModel.MxStoreMember, err error) {
+	db := global.GVA_DB.Where("store_id = ? AND user_id = ? AND is_delete = ?", storeId, userId, 0)
+	if post > 0 {
+		db = db.Where("post = ?", post)
+	}
+	err = db.First(&member).Error
+	return
+}
+
+func (s *StoreMemberService) DeleteMxStoreMemberByStoreIds(storeIds []int64) (err error) {
+	err = global.GVA_DB.Model(&storeModel.MxStoreMember{}).
+		Where("store_id IN ?", storeIds).
+		Update("is_delete", 1).Error
+	return err
+}
+
 func (s *StoreMemberService) GetMxStoreMemberList(info request.PageInfo, storeId int64) (list interface{}, total int64, err error) {
 	limit := info.PageSize
 	offset := info.PageSize * (info.Page - 1)
-	// db := global.GVA_DB.Model(&storeModel.MxStoreMember{}).Where("store_id = ? AND is_delete = ?", storeId, 0)
-	// 联表查询用户姓名，返回给前端用于“用户姓名”列展示
+	
+	if limit == 0 {
+		limit = 10000
+	}
+	
 	db := global.GVA_DB.Table("mx_store_member AS msm").
 		Joins("LEFT JOIN mx_user AS mu ON mu.user_id = msm.user_id AND mu.is_delete = 0").
 		Where("msm.store_id = ? AND msm.is_delete = ?", storeId, 0)
@@ -72,7 +91,6 @@ func (s *StoreMemberService) GetMxStoreMemberList(info request.PageInfo, storeId
 	if err != nil {
 		return
 	}
-	// var memberList []storeModel.MxStoreMember
 	var memberList []storeModel.MxStoreMemberWithUser
 	err = db.Select("msm.*, mu.name AS username").Limit(limit).Offset(offset).Find(&memberList).Error
 	return memberList, total, err

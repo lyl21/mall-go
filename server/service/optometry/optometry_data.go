@@ -38,6 +38,11 @@ func (s *OptometryDataService) GetByRecordId(recordsId int64) (list []optometryM
 func (s *OptometryDataService) GetOptometryDataList(pageInfo request.PageInfo, search optometryModel.OptometryData) (list []optometryModel.OptometryData, total int64, err error) {
 	limit := pageInfo.PageSize
 	offset := pageInfo.PageSize * (pageInfo.Page - 1)
+	
+	if limit == 0 {
+		limit = 10000
+	}
+	
 	db := global.GVA_DB.Model(&optometryModel.OptometryData{})
 
 	if search.OptometryRecordsId != nil {

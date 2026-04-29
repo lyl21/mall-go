@@ -5,7 +5,6 @@ import (
 
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/common"
-	"github.com/flipped-aurora/gin-vue-admin/server/model/common/response"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/store"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -26,10 +25,10 @@ func (a *ClientDeviceApi) GetAppVersion(c *gin.Context) {
 	err := global.GVA_DB.Where("installing_id = ?", 1).First(&pkg).Error
 	if err != nil {
 		global.GVA_LOG.Error("获取APP版本失败", zap.Error(err))
-		response.FailWithMessage("获取失败", c)
+		ClientFailWithMessage("获取失败", c)
 		return
 	}
-	response.OkWithData(pkg, c)
+	ClientOkWithData(pkg, c)
 }
 
 // GetKeyboardVersion 获取键盘安装包版本
@@ -43,10 +42,10 @@ func (a *ClientDeviceApi) GetKeyboardVersion(c *gin.Context) {
 	err := global.GVA_DB.Where("installing_id = ?", 2).First(&pkg).Error
 	if err != nil {
 		global.GVA_LOG.Error("获取键盘版本失败", zap.Error(err))
-		response.FailWithMessage("获取失败", c)
+		ClientFailWithMessage("获取失败", c)
 		return
 	}
-	response.OkWithData(pkg, c)
+	ClientOkWithData(pkg, c)
 }
 
 // GetOptometerVersion 获取验光仪APP安装包版本
@@ -60,10 +59,10 @@ func (a *ClientDeviceApi) GetOptometerVersion(c *gin.Context) {
 	err := global.GVA_DB.Where("installing_id = ?", 3).First(&pkg).Error
 	if err != nil {
 		global.GVA_LOG.Error("获取验光仪版本失败", zap.Error(err))
-		response.FailWithMessage("获取失败", c)
+		ClientFailWithMessage("获取失败", c)
 		return
 	}
-	response.OkWithData(pkg, c)
+	ClientOkWithData(pkg, c)
 }
 
 // GetOptometerManualVersion 获取手动验光仪APP安装包版本
@@ -77,10 +76,10 @@ func (a *ClientDeviceApi) GetOptometerManualVersion(c *gin.Context) {
 	err := global.GVA_DB.Where("installing_id = ?", 4).First(&pkg).Error
 	if err != nil {
 		global.GVA_LOG.Error("获取手动验光仪版本失败", zap.Error(err))
-		response.FailWithMessage("获取失败", c)
+		ClientFailWithMessage("获取失败", c)
 		return
 	}
-	response.OkWithData(pkg, c)
+	ClientOkWithData(pkg, c)
 }
 
 // RegisterDeviceRequest 设备注册请求
@@ -103,7 +102,7 @@ type RegisterDeviceRequest struct {
 func (a *ClientDeviceApi) RegisterDevice(c *gin.Context) {
 	var req RegisterDeviceRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.FailWithMessage("参数错误: "+err.Error(), c)
+		ClientFailWithMessage("参数错误: "+err.Error(), c)
 		return
 	}
 
@@ -125,10 +124,10 @@ func (a *ClientDeviceApi) RegisterDevice(c *gin.Context) {
 
 		if err := global.GVA_DB.Save(&existing).Error; err != nil {
 			global.GVA_LOG.Error("更新设备失败", zap.Error(err))
-			response.FailWithMessage("注册失败", c)
+			ClientFailWithMessage("注册失败", c)
 			return
 		}
-		response.OkWithData(existing, c)
+		ClientOkWithData(existing, c)
 		return
 	}
 
@@ -146,11 +145,11 @@ func (a *ClientDeviceApi) RegisterDevice(c *gin.Context) {
 
 	if err := global.GVA_DB.Create(&device).Error; err != nil {
 		global.GVA_LOG.Error("创建设备失败", zap.Error(err))
-		response.FailWithMessage("注册失败", c)
+		ClientFailWithMessage("注册失败", c)
 		return
 	}
 
-	response.OkWithData(device, c)
+	ClientOkWithData(device, c)
 }
 
 // UploadErrorLogRequest 上传错误日志请求
@@ -170,7 +169,7 @@ type UploadErrorLogRequest struct {
 func (a *ClientDeviceApi) UploadErrorLog(c *gin.Context) {
 	var req UploadErrorLogRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.FailWithMessage("参数错误: "+err.Error(), c)
+		ClientFailWithMessage("参数错误: "+err.Error(), c)
 		return
 	}
 
@@ -184,9 +183,9 @@ func (a *ClientDeviceApi) UploadErrorLog(c *gin.Context) {
 
 	if err := global.GVA_DB.Create(&log).Error; err != nil {
 		global.GVA_LOG.Error("保存错误日志失败", zap.Error(err))
-		response.FailWithMessage("上传失败", c)
+		ClientFailWithMessage("上传失败", c)
 		return
 	}
 
-	response.OkWithMessage("上传成功", c)
+	ClientOkWithMessage("上传成功", c)
 }

@@ -2,9 +2,6 @@
   <div>
     <div class="gva-search-box">
       <el-form :inline="true" :model="searchInfo">
-        <el-form-item label="设备ID">
-          <el-input v-model="searchInfo.equipment" placeholder="设备ID" clearable />
-        </el-form-item>
         <el-form-item label="设备名称">
           <el-input v-model="searchInfo.deviceName" placeholder="设备名称" clearable />
         </el-form-item>

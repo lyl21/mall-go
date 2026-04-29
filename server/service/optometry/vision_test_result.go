@@ -38,6 +38,11 @@ func (s *VisionTestResultService) GetByRecordId(recordsId int64) (result optomet
 func (s *VisionTestResultService) GetVisionTestResultList(pageInfo request.PageInfo, search optometryModel.VisionTestResult) (list []optometryModel.VisionTestResult, total int64, err error) {
 	limit := pageInfo.PageSize
 	offset := pageInfo.PageSize * (pageInfo.Page - 1)
+	
+	if limit == 0 {
+		limit = 10000
+	}
+	
 	db := global.GVA_DB.Model(&optometryModel.VisionTestResult{})
 
 	if search.OptometryRecordsId != nil {

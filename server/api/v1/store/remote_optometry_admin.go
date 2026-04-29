@@ -7,7 +7,7 @@ import (
 	"github.com/flipped-aurora/gin-vue-admin/server/model/common/request"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/common/response"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/store"
-	"github.com/flipped-aurora/gin-vue-admin/server/utils"
+	"github.com/flipped-aurora/gin-vue-admin/server/wsmanager"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )
@@ -41,7 +41,7 @@ func (a *RemoteOptometryAdminApi) GetRemoteOptometryStatusList(c *gin.Context) {
 	isOnline := c.Query("isOnline")
 
 	// 从WebSocket管理器获取实时状态
-	if utils.RemoteOptometryManager == nil {
+	if wsmanager.WSManager == nil {
 		response.OkWithDetailed(response.PageResult{
 			List:     []store.RemoteOptometryStatus{},
 			Total:    0,
@@ -52,7 +52,7 @@ func (a *RemoteOptometryAdminApi) GetRemoteOptometryStatusList(c *gin.Context) {
 	}
 
 	// 获取所有会话状态
-	stats := utils.RemoteOptometryManager.GetStats()
+	stats := wsmanager.WSManager.GetStats()
 	sessions, ok := stats["sessions"].([]map[string]interface{})
 	if !ok {
 		response.OkWithDetailed(response.PageResult{
@@ -230,9 +230,9 @@ func (a *RemoteOptometryAdminApi) GetNiuTouDeviceStatus(c *gin.Context) {
 	// 查询设备是否在线（有活跃会话）
 	isInControl := false
 	controlSessionId := ""
-	if utils.RemoteOptometryManager != nil {
+	if wsmanager.WSManager != nil {
 		// 遍历所有会话检查设备是否在线
-		stats := utils.RemoteOptometryManager.GetStats()
+		stats := wsmanager.WSManager.GetStats()
 		if sessions, ok := stats["sessions"].([]map[string]interface{}); ok {
 			for _, session := range sessions {
 				if getBool(session["hasControlled"]) || getBool(session["hasMainControl"]) {

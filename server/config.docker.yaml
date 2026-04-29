@@ -253,9 +253,14 @@ wechat-mini-program:
     app-id: wx457a99d69770774d
     app-secret: 86b1d5a3dea580856ed3b5a735b4168a
 
+# 声网配置
+agora:
+    app-id: "2f6b3ce648174a48bf50f041f3f50f22"
+    app-certificate: "d1d452038c1d46948b9039726f253a4a"
+
 # 微信支付配置
 wechat:
-    mini-app-id: wx457a99d69770774d 
+    mini-app-id: wx457a99d69770774d
     mch-id: 1712186848
     api-key: 3eafd7767e5243488e79b0f68e7da100
     notify-url: https://admin.ximingtech.com:7500/weixin/api/ma/orderinfo/notify-order-web

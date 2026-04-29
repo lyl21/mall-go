@@ -42,12 +42,26 @@ func (s *StoreService) GetMxStore(id int64) (store storeModel.MxStore, err error
 	return
 }
 
-func (s *StoreService) GetMxStoreList(info request.PageInfo, search string) (list interface{}, total int64, err error) {
+func (s *StoreService) GetMxStoreList(info request.PageInfo, search storeModel.MxStore) (list interface{}, total int64, err error) {
 	limit := info.PageSize
 	offset := info.PageSize * (info.Page - 1)
+	
+	if limit == 0 {
+		limit = 10000
+	}
+	
 	db := global.GVA_DB.Model(&storeModel.MxStore{}).Where("is_delete = ?", 0)
-	if search != "" {
-		db = db.Where("store_name_english LIKE ?", "%"+search+"%")
+	if search.StoreNameEnglish != "" {
+		db = db.Where("store_name_english LIKE ?", "%"+search.StoreNameEnglish+"%")
+	}
+	if search.BrandId != "" {
+		db = db.Where("brand_id LIKE ?", "%"+search.BrandId+"%")
+	}
+	if search.StoreNumber != "" {
+		db = db.Where("store_number LIKE ?", "%"+search.StoreNumber+"%")
+	}
+	if search.StorePhone != "" {
+		db = db.Where("store_phone LIKE ?", "%"+search.StorePhone+"%")
 	}
 	err = db.Count(&total).Error
 	if err != nil {

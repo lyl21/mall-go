@@ -10,6 +10,7 @@ type MxStore struct {
 	BrandId         string      `json:"brandId" gorm:"column:brand_id;type:varchar(50);default:'';comment:品牌编号"`
 	StoreNumber     string      `json:"storeNumber" gorm:"column:store_number;type:varchar(50);default:'';comment:门店编号"`
 	StoreNameEnglish string     `json:"storeNameEnglish" gorm:"column:store_name_english;type:varchar(50);default:'';comment:门店名称"`
+	StorePhone      string      `json:"storePhone" gorm:"column:store_phone;type:varchar(20);default:'';comment:门店电话"`
 	IsDelete        int         `json:"isDelete" gorm:"column:is_delete;type:int(1);default:0;comment:逻辑删0否1是"`
 }
 

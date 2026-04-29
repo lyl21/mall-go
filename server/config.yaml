@@ -1,6 +1,6 @@
 agora:
-    app-id: ""
-    app-certificate: ""
+    app-id: "2f6b3ce648174a48bf50f041f3f50f22"
+    app-certificate: "d1d452038c1d46948b9039726f253a4a"
 aliyun-oss:
     endpoint: yourEndpoint
     access-key-id: yourAccessKeyId

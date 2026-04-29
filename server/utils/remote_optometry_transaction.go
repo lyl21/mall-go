@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
+	"github.com/flipped-aurora/gin-vue-admin/server/utils/ws"
 	"go.uber.org/zap"
 )
 
@@ -23,12 +24,12 @@ const (
 type TransactionRecord struct {
 	TxnID       string
 	SessionID   string
-	Role        ClientRole
+	Role        ws.ClientRole
 	Status      TransactionStatus
 	CreatedAt   int64
 	UpdatedAt   int64
-	CommandData *CommandPatchData
-	AckData     *AckData
+	CommandData *ws.CommandPatchData
+	AckData     *ws.AckData
 	mu          sync.RWMutex
 }
 
@@ -60,7 +61,7 @@ func (t *TransactionRecord) GetStatus() TransactionStatus {
 }
 
 // GetCommandData 获取命令数据
-func (t *TransactionRecord) GetCommandData() *CommandPatchData {
+func (t *TransactionRecord) GetCommandData() *ws.CommandPatchData {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
 	return t.CommandData
@@ -92,11 +93,11 @@ func NewTransactionManager() *TransactionManager {
 
 // generateTransactionID 生成事务ID
 func (tm *TransactionManager) generateTransactionID() string {
-	return "txn_" + time.Now().Format("20060102150405") + "_" + randomString(8)
+	return "txn_" + time.Now().Format("20060102150405") + "_" + ws.RandomString(8)
 }
 
 // BeginTransaction 开始新事务
-func (tm *TransactionManager) BeginTransaction(sessionID string, role ClientRole, commandData *CommandPatchData) string {
+func (tm *TransactionManager) BeginTransaction(sessionID string, role ws.ClientRole, commandData *ws.CommandPatchData) string {
 	tm.mu.Lock()
 	defer tm.mu.Unlock()
 
@@ -156,7 +157,7 @@ func (tm *TransactionManager) MarkApplying(txnID string) bool {
 }
 
 // CompleteTransaction 完成事务
-func (tm *TransactionManager) CompleteTransaction(txnID string, ackData *AckData) bool {
+func (tm *TransactionManager) CompleteTransaction(txnID string, ackData *ws.AckData) bool {
 	tm.mu.RLock()
 	record, ok := tm.transactions[txnID]
 	tm.mu.RUnlock()

@@ -34,6 +34,11 @@ func (s *UserFlowService) GetMxUserFlow(id int64) (flow storeModel.MxUserFlow, e
 func (s *UserFlowService) GetMxUserFlowList(info request.PageInfo, userId int64) (list interface{}, total int64, err error) {
 	limit := info.PageSize
 	offset := info.PageSize * (info.Page - 1)
+	
+	if limit == 0 {
+		limit = 10000
+	}
+	
 	db := global.GVA_DB.Model(&storeModel.MxUserFlow{}).Where("user_id = ?", userId)
 	err = db.Count(&total).Error
 	if err != nil {

@@ -9,6 +9,7 @@ type ApiGroup struct {
 	OptometryDataApi
 	VisionTestResultApi
 	TryOptometryApi
+	ErrorReportLogApi
 }
 
 var (
@@ -16,4 +17,5 @@ var (
 	optometryDataService    = service.ServiceGroupApp.OptometryServiceGroup.OptometryDataService
 	visionTestResultService = service.ServiceGroupApp.OptometryServiceGroup.VisionTestResultService
 	tryOptometryService     = service.ServiceGroupApp.OptometryServiceGroup.TryOptometryService
+	errorReportLogService   = service.ServiceGroupApp.OptometryServiceGroup.ErrorReportLogService
 )

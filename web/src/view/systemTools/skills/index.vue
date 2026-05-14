@@ -1,8 +1,7 @@
-﻿<template>
+<template>
   <div class="h-full">
     <warning-bar
-        href="https://plugin.gin-vue-admin.com/license"
-        title="此功能仅在开发阶段使用，用户构建本项目内的skills技能库。"
+        title="此功能用于构建本项目内的skills技能库。"
     />
     <el-row :gutter="12" class="h-full">
       <el-col :xs="24" :sm="8" :md="6" :lg="5" class="flex flex-col gap-4 h-full">
@@ -477,11 +476,7 @@
         </el-table-column>
         <el-table-column label="名称" prop="name" min-width="160" show-overflow-tooltip>
           <template #default="{ row }">
-            <a
-              class="text-blue-500 hover:text-blue-700 cursor-pointer"
-              :href="`https://plugin.gin-vue-admin.com/details/${row.ID}`"
-              target="_blank"
-            >{{ row.name }}</a>
+            <span class="text-blue-500">{{ row.name }}</span>
           </template>
         </el-table-column>
         <el-table-column label="简介" prop="resume" min-width="240" show-overflow-tooltip />
@@ -497,12 +492,10 @@
               :loading="downloadingIds.has(row.ID)"
               @click="handleDownloadSkill(row)"
             >下载</el-button>
-            <a
+            <span
               v-else
-              class="text-blue-500 hover:text-blue-700 text-sm"
-              :href="`https://plugin.gin-vue-admin.com/details/${row.ID}`"
-              target="_blank"
-            >去购买</a>
+              class="text-sm text-gray-400"
+            >需购买</span>
           </template>
         </el-table-column>
       </el-table>
@@ -1308,7 +1301,7 @@
     return options
   })
 
-  const pluginMarketLoginURL = 'https://plugin.gin-vue-admin.com'
+  const pluginMarketLoginURL = ''
 
   const isPluginMarketAuthError = (message) => {
     const msg = (message || '').toString()

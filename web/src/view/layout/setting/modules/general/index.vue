@@ -112,44 +112,6 @@
         </div>
       </div>
     </div>
-
-    <div class="mb-10">
-      <div class="gva-theme-section-header">
-        <div class="gva-theme-divider"></div>
-        <span class="gva-theme-section-title">关于项目</span>
-        <div class="gva-theme-divider"></div>
-      </div>
-
-      <div class="gva-theme-section-content">
-        <div class="gva-theme-card-bg">
-          <div class="flex items-start gap-5">
-            <div
-              class="w-16 h-16 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm">
-              <Logo />
-            </div>
-            <div class="flex-1">
-              <h4 class="text-xl font-semibold gva-theme-text-main mb-3">Gin-Vue-Admin</h4>
-              <p class="text-sm gva-theme-text-sub mb-5 leading-relaxed">
-                基于 Vue3 + Gin 的全栈开发基础平台，提供完整的后台管理解决方案
-              </p>
-              <div class="flex items-center gap-3 text-sm">
-                <a href="https://github.com/flipped-aurora/gin-vue-admin" target="_blank"
-                  class="font-medium transition-colors duration-150 hover:underline"
-                  :style="{ color: config.primaryColor }">
-                  GitHub 仓库
-                </a>
-                <span class="text-gray-400 dark:text-gray-500">·</span>
-                <a href="https://www.gin-vue-admin.com/" target="_blank"
-                  class="font-medium transition-colors duration-150 hover:underline"
-                  :style="{ color: config.primaryColor }">
-                  官方文档
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -158,7 +120,6 @@ import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { storeToRefs } from 'pinia'
 import { useAppStore } from '@/pinia'
-import Logo from '@/components/logo/index.vue'
 
 defineOptions({
   name: 'GeneralSettings'
@@ -214,7 +175,7 @@ const handleExportConfig = () => {
 
   const link = document.createElement('a')
   link.href = url
-  link.download = `gin-vue-admin-config-${new Date().toISOString().split('T')[0]}.json`
+  link.download = `xm-admin-config-${new Date().toISOString().split('T')[0]}.json`
   document.body.appendChild(link)
   link.click()
   document.body.removeChild(link)

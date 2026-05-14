@@ -35,7 +35,7 @@ func (a *ClientMxUserApi) List(c *gin.Context) {
 		user.UserId = *req.UserId
 	}
 
-	list, total, err := storeService.UserServiceApp.GetMxUserList(req.PageInfo, req.Name)
+	list, total, err := storeService.UserServiceApp.GetMxUserList(req.PageInfo, store.MxUser{Search: req.Name})
 	if err != nil {
 		ClientFailWithMessage("获取列表失败", c)
 		return

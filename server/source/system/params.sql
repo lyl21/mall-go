@@ -16,4 +16,8 @@ INSERT INTO sys_params (created_at, updated_at, name, `key`, value, `desc`) VALU
 (NOW(), NOW(), 'Token有效期', 'token.expireTime', '300', 'Token有效期（分钟）'),
 (NOW(), NOW(), 'Token密钥', 'token.secret', 'abcdefghijklmnopqrstuvwxyz', 'Token签名密钥'),
 (NOW(), NOW(), '文件上传路径', 'sys.profile', '/home/ruoyi/uploadPath', '文件上传存储路径'),
-(NOW(), NOW(), '获取IP地址开关', 'sys.addressEnabled', 'true', '是否开启获取IP地址功能');
+(NOW(), NOW(), '获取IP地址开关', 'sys.addressEnabled', 'true', '是否开启获取IP地址功能'),
+(NOW(), NOW(), 'Control App 大模型API Key', 'control.app.modelApiKey', '', 'Control APP 大模型 API Key'),
+(NOW(), NOW(), 'Control App 大模型名称', 'control.app.model', '', 'Control APP 大模型名称'),
+(NOW(), NOW(), 'Control App 大模型BaseUrl', 'control.app.modelBaseUrl', '', 'Control APP 大模型 Base URL'),
+(NOW(), NOW(), 'Control App 系统提示词', 'control.app.systemPrompt', '你是一个专业验光人员,需要解答用户的验光问题,使用中文回答,回答字数控制在200字到300字以内,使用专业、简洁的回答', 'Control APP 大模型系统提示词（system role）');

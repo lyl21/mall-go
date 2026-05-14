@@ -13,6 +13,8 @@ type MxActivationCode struct {
 	LastOnlineTime  *common.DateTime `json:"lastOnlineTime" gorm:"column:last_online_time;comment:最后在线时间"`
 	DeviceName      string           `json:"deviceName" gorm:"column:device_name;type:varchar(100);default:'';comment:设备名称"`
 	DeviceLocation  string           `json:"deviceLocation" gorm:"column:device_location;type:varchar(200);default:'';comment:设备位置"`
+	IpAddress       string           `json:"ipAddress" gorm:"column:ip_address;type:varchar(50);default:'';comment:设备IP"`
+	IpLocation      string           `json:"ipLocation" gorm:"column:ip_location;type:varchar(200);default:'';comment:IP定位"`
 	Remark          string           `json:"remark" gorm:"column:remark;type:varchar(500);default:'';comment:备注"`
 }
 

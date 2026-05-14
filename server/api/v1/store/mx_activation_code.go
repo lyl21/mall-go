@@ -119,9 +119,11 @@ func (a *ActivationCodeApi) GetMxActivationCode(c *gin.Context) {
 // @Security  ApiKeyAuth
 // @accept    application/json
 // @Produce   application/json
-// @Param     page     query     int                                true  "页码"
-// @Param     pageSize query     int                                true  "每页大小"
-// @Success   200      {object}  response.Response{data=response.PageResult,msg=string}  "获取激活码列表"
+// @Param     page       query     int                                true  "页码"
+// @Param     pageSize   query     int                                true  "每页大小"
+// @Param     deviceName query     string                             false "设备名称"
+// @Param     app        query     string                             false "应用名称(验光仪/牛头control)"
+// @Success   200        {object}  response.Response{data=response.PageResult,msg=string}  "获取激活码列表"
 // @Router    /store/mxActivationCodeList [get]
 func (a *ActivationCodeApi) GetMxActivationCodeList(c *gin.Context) {
 	var pageInfo request.PageInfo
@@ -130,7 +132,9 @@ func (a *ActivationCodeApi) GetMxActivationCodeList(c *gin.Context) {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	list, total, err := activationCodeService.GetMxActivationCodeList(pageInfo)
+	deviceName := c.Query("deviceName")
+	app := c.Query("app")
+	list, total, err := activationCodeService.GetMxActivationCodeList(pageInfo, deviceName, app)
 	if err != nil {
 		global.GVA_LOG.Error("获取失败!", zap.Error(err))
 		response.FailWithMessage("获取失败:"+err.Error(), c)

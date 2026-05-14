@@ -5,4 +5,5 @@ type ServiceGroup struct {
 	OptometryDataService
 	VisionTestResultService
 	TryOptometryService
+	ErrorReportLogService
 }

@@ -4,7 +4,7 @@ metadata:
   name: config.yaml
   annotations:
     flipped-aurora/gin-vue-admin: backend
-    github: "https://github.com/flipped-aurora/gin-vue-admin.git"
+    github: ""
     app.kubernetes.io/version: 0.0.1
   labels:
     app: gva-server
@@ -23,7 +23,7 @@ data:
     zap:
       level: 'info'
       format: 'console'
-      prefix: '[github.com/flipped-aurora/gin-vue-admin/server]'
+      prefix: '[/server]'
       director: 'log'
       link-name: 'latest_log'
       show-line: true

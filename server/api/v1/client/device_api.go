@@ -178,7 +178,6 @@ func (a *ClientDeviceApi) UploadErrorLog(c *gin.Context) {
 		LogId:       uuid.New().String(),
 		EquipmentId: req.EquipmentID,
 		LogPath:     req.LogContent, // 实际应该保存到文件，这里简化处理
-		CreateTime:  time.Now(),
 	}
 
 	if err := global.GVA_DB.Create(&log).Error; err != nil {

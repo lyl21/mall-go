@@ -1,6 +1,7 @@
 package service
 
 import (
+	"github.com/flipped-aurora/gin-vue-admin/server/service/chat"
 	"github.com/flipped-aurora/gin-vue-admin/server/service/example"
 	"github.com/flipped-aurora/gin-vue-admin/server/service/mall"
 	"github.com/flipped-aurora/gin-vue-admin/server/service/optometry"
@@ -18,4 +19,5 @@ type ServiceGroup struct {
 	OptometryServiceGroup optometry.ServiceGroup
 	MallServiceGroup      mall.ServiceGroup
 	WechatServiceGroup    wechat.ServiceGroup
+	ChatServiceGroup      chat.ServiceGroup
 }

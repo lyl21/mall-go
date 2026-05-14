@@ -15,8 +15,8 @@ type ActivationCodeService struct{}
 var ActivationCodeServiceApp = new(ActivationCodeService)
 
 const (
-	activationKey      = "uujjljkaahhznzkkassndasn,hasgsjadkasjkjxbz,,kajdl1shak1"
-	activationPkgName  = "com.dongdialog.ks"
+	activationKey     = "uujjljkaahhznzkkassndasn,hasgsjadkasjkjxbz,,kajdl1shak1"
+	activationPkgName = "com.dongdialog.ks"
 )
 
 func (s *ActivationCodeService) CreateMxActivationCode(code storeModel.MxActivationCode) (err error) {
@@ -46,10 +46,16 @@ func (s *ActivationCodeService) GetMxActivationCode(id int64) (code storeModel.M
 	return
 }
 
-func (s *ActivationCodeService) GetMxActivationCodeList(info request.PageInfo) (list interface{}, total int64, err error) {
+func (s *ActivationCodeService) GetMxActivationCodeList(info request.PageInfo, deviceName string, app string) (list interface{}, total int64, err error) {
 	limit := info.PageSize
 	offset := info.PageSize * (info.Page - 1)
 	db := global.GVA_DB.Model(&storeModel.MxActivationCode{})
+	if deviceName != "" {
+		db = db.Where("device_name LIKE ?", "%"+deviceName+"%")
+	}
+	if app != "" {
+		db = db.Where("app = ?", app)
+	}
 	err = db.Count(&total).Error
 	if err != nil {
 		return

@@ -80,87 +80,123 @@
     </div>
 
     <!-- 订单详情弹窗 -->
-    <el-dialog v-model="detailVisible" title="订单详情" width="900px" destroy-on-close>
-      <el-descriptions :column="2" border>
-        <el-descriptions-item label="订单号">{{ detail.orderNo }}</el-descriptions-item>
-        <el-descriptions-item label="用户ID">{{ detail.userId }}</el-descriptions-item>
-        <el-descriptions-item label="支付方式">{{ paymentWayLabel(detail.paymentWay) }}</el-descriptions-item>
-        <el-descriptions-item label="订单状态">
-          <el-tag :type="statusType(detail.status)">{{ statusLabel(detail.status) }}</el-tag>
-        </el-descriptions-item>
-        <el-descriptions-item label="销售金额">¥{{ detail.salesPrice }}</el-descriptions-item>
-        <el-descriptions-item label="运费">¥{{ detail.freightPrice }}</el-descriptions-item>
-        <el-descriptions-item label="支付金额">
-          <span class="text-price text-bold">¥{{ detail.paymentPrice }}</span>
-        </el-descriptions-item>
-        <el-descriptions-item label="买家留言">{{ detail.userMessage || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="收货人">{{ detail.logistics?.userName || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="联系电话">{{ detail.logistics?.telNum || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="收货地址" :span="2">{{ detail.logistics?.address || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="物流公司">{{ detail.logistics?.logistics || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="物流单号">{{ detail.logistics?.logisticsNo || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="创建时间">{{ detail.createTime || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="支付时间">{{ detail.paymentTime || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="发货时间">{{ detail.deliveryTime || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="收货时间">{{ detail.receiverTime || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="备注" :span="2">{{ detail.remark || '-' }}</el-descriptions-item>
-      </el-descriptions>
-
-      <!-- 商品明细 -->
-      <div class="goods-section" v-if="detail.orderItems && detail.orderItems.length">
-        <h4>商品明细</h4>
-        <el-table :data="detail.orderItems" border size="small">
-          <el-table-column label="商品图片" width="80">
-            <template #default="scope">
-              <el-image 
-                v-if="scope.row.picUrl" 
-                :src="getFullImageUrl(scope.row.picUrl)" 
-                fit="cover" 
-                style="width: 50px; height: 50px; border-radius: 4px;"
-                :preview-src-list="[getFullImageUrl(scope.row.picUrl)]"
-              />
-              <span v-else>-</span>
-            </template>
-          </el-table-column>
-          <el-table-column label="商品名称" prop="spuName" min-width="150" show-overflow-tooltip />
-          <el-table-column label="商品ID" prop="spuId" width="120" show-overflow-tooltip />
-          <el-table-column label="单价" width="100">
-            <template #default="scope">¥{{ scope.row.salesPrice }}</template>
-          </el-table-column>
-          <el-table-column label="数量" prop="quantity" width="70" align="center" />
-          <el-table-column label="小计" width="100">
-            <template #default="scope">¥{{ (scope.row.salesPrice * scope.row.quantity).toFixed(2) }}</template>
-          </el-table-column>
-          <el-table-column label="退款状态" width="90">
-            <template #default="scope">
-              <el-tag v-if="scope.row.isRefund === '1'" type="warning" size="small">已退款</el-tag>
-              <el-tag v-else-if="scope.row.status === '1'" type="warning" size="small">退款中</el-tag>
-              <el-tag v-else type="success" size="small">正常</el-tag>
-            </template>
-          </el-table-column>
-        </el-table>
-        <div class="goods-total">
-          共 {{ detail.orderItems.length }} 种商品，合计 {{ getTotalQuantity(detail.orderItems) }} 件
+    <el-dialog v-model="detailVisible" title="订单详情" width="1100px" destroy-on-close top="5vh">
+      <!-- 顶部概览卡片 -->
+      <div class="order-overview" v-if="detail.orderNo">
+        <div class="overview-left">
+          <span class="overview-order-no">订单号：{{ detail.orderNo }}</span>
+          <el-tag :type="statusType(detail.status)" size="large">{{ statusLabel(detail.status) }}</el-tag>
+        </div>
+        <div class="overview-right">
+          <div class="overview-amount">
+            <span class="overview-label">实付金额</span>
+            <span class="overview-price">¥{{ detail.paymentPrice }}</span>
+          </div>
         </div>
       </div>
 
-      <!-- 物流信息 -->
-      <div class="logistics-section" v-if="detail.logistics && detail.logistics.logisticsNo">
-        <h4>物流信息</h4>
-        <el-descriptions :column="2" border size="small">
-          <el-descriptions-item label="物流公司">{{ detail.logistics.logistics || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="物流单号">{{ detail.logistics.logisticsNo || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="快递状态">
-            <el-tag v-if="detail.logistics.isCheck === '1'" type="success" size="small">已签收</el-tag>
-            <el-tag v-else type="info" size="small">运输中</el-tag>
-          </el-descriptions-item>
-          <el-descriptions-item label="邮编">{{ detail.logistics.postalCode || '-' }}</el-descriptions-item>
-        </el-descriptions>
-        <div class="logistics-message" v-if="detail.logistics.message">
-          <h5>物流详情：</h5>
-          <p>{{ detail.logistics.message }}</p>
-        </div>
-      </div>
+      <!-- 主体：左详情 + 右时间轴 -->
+      <el-row :gutter="24">
+        <el-col :span="16">
+          <!-- 订单信息 -->
+          <div class="detail-section">
+            <h4 class="section-title">订单信息</h4>
+            <el-descriptions :column="2" border size="small">
+              <el-descriptions-item label="用户ID">{{ detail.userId }}</el-descriptions-item>
+              <el-descriptions-item label="支付方式">{{ paymentWayLabel(detail.paymentWay) }}</el-descriptions-item>
+              <el-descriptions-item label="销售金额">¥{{ detail.salesPrice }}</el-descriptions-item>
+              <el-descriptions-item label="运费">¥{{ detail.freightPrice }}</el-descriptions-item>
+              <el-descriptions-item label="支付金额" :span="2">
+                <span class="text-price text-bold">¥{{ detail.paymentPrice }}</span>
+              </el-descriptions-item>
+              <el-descriptions-item label="买家留言" :span="2">{{ detail.userMessage || '-' }}</el-descriptions-item>
+              <el-descriptions-item label="收货人">{{ detail.logistics?.userName || '-' }}</el-descriptions-item>
+              <el-descriptions-item label="联系电话">{{ detail.logistics?.telNum || '-' }}</el-descriptions-item>
+              <el-descriptions-item label="收货地址" :span="2">{{ detail.logistics?.address || '-' }}</el-descriptions-item>
+              <el-descriptions-item label="备注" :span="2">{{ detail.remark || '-' }}</el-descriptions-item>
+            </el-descriptions>
+          </div>
+
+          <!-- 商品明细 -->
+          <div class="detail-section" v-if="detail.orderItems && detail.orderItems.length">
+            <h4 class="section-title">商品明细</h4>
+            <el-table :data="detail.orderItems" border size="small">
+              <el-table-column label="商品图片" width="80">
+                <template #default="scope">
+                  <el-image 
+                    v-if="scope.row.picUrl" 
+                    :src="getFullImageUrl(scope.row.picUrl)" 
+                    fit="cover" 
+                    preview-teleported
+                    style="width: 50px; height: 50px; border-radius: 4px;"
+                    :preview-src-list="[getFullImageUrl(scope.row.picUrl)]"
+                  />
+                  <span v-else>-</span>
+                </template>
+              </el-table-column>
+              <el-table-column label="商品名称" prop="spuName" min-width="150" show-overflow-tooltip />
+              <el-table-column label="商品ID" prop="spuId" width="120" show-overflow-tooltip />
+              <el-table-column label="单价" width="100">
+                <template #default="scope">¥{{ scope.row.salesPrice }}</template>
+              </el-table-column>
+              <el-table-column label="数量" prop="quantity" width="70" align="center" />
+              <el-table-column label="小计" width="100">
+                <template #default="scope">¥{{ (scope.row.salesPrice * scope.row.quantity).toFixed(2) }}</template>
+              </el-table-column>
+              <el-table-column label="退款状态" width="90">
+                <template #default="scope">
+                  <el-tag v-if="scope.row.isRefund === '1'" type="warning" size="small">已退款</el-tag>
+                  <el-tag v-else-if="scope.row.status === '1'" type="warning" size="small">退款中</el-tag>
+                  <el-tag v-else type="success" size="small">正常</el-tag>
+                </template>
+              </el-table-column>
+            </el-table>
+            <div class="goods-total">
+              共 {{ detail.orderItems.length }} 种商品，合计 {{ getTotalQuantity(detail.orderItems) }} 件
+            </div>
+          </div>
+
+          <!-- 物流信息 -->
+          <div class="detail-section" v-if="detail.logistics && detail.logistics.logisticsNo">
+            <h4 class="section-title">物流信息</h4>
+            <el-descriptions :column="2" border size="small">
+              <el-descriptions-item label="物流公司">{{ detail.logistics.logistics || '-' }}</el-descriptions-item>
+              <el-descriptions-item label="物流单号">{{ detail.logistics.logisticsNo || '-' }}</el-descriptions-item>
+              <el-descriptions-item label="快递状态">
+                <el-tag v-if="detail.logistics.isCheck === '1'" type="success" size="small">已签收</el-tag>
+                <el-tag v-else type="info" size="small">运输中</el-tag>
+              </el-descriptions-item>
+              <el-descriptions-item label="邮编">{{ detail.logistics.postalCode || '-' }}</el-descriptions-item>
+            </el-descriptions>
+            <div class="logistics-message" v-if="detail.logistics.message">
+              <h5>物流详情：</h5>
+              <p>{{ detail.logistics.message }}</p>
+            </div>
+          </div>
+        </el-col>
+        <el-col :span="8">
+          <!-- 时间轴 -->
+          <div class="timeline-section">
+            <h4 class="section-title">订单状态</h4>
+            <el-timeline>
+              <el-timeline-item
+                v-for="item in orderTimeline"
+                :key="item.label"
+                :type="item.type"
+                :timestamp="item.time || ''"
+                :hollow="item.hollow"
+                placement="top"
+              >
+                <div class="timeline-item-content">
+                  <span class="timeline-label" :class="{ 'is-current': item.current }">
+                    {{ item.label }}
+                  </span>
+                </div>
+              </el-timeline-item>
+            </el-timeline>
+          </div>
+        </el-col>
+      </el-row>
     </el-dialog>
 
     <!-- 修改状态弹窗 -->
@@ -279,6 +315,58 @@ const availableStatuses = computed(() => {
     value,
     label: statusMap[value]
   }))
+})
+
+// 生成订单时间轴数据
+const orderTimeline = computed(() => {
+  const d = detail.value
+  if (!d || d.status === undefined || d.status === null) return []
+
+  const s = d.status
+  const items = []
+
+  // 步骤1: 创建订单 — 始终展示
+  items.push({ label: '创建订单', time: d.createTime || '', type: 'primary', hollow: false, current: false })
+
+  if (s === '0') {
+    // 待付款：当前步骤高亮，后续灰显
+    items.push({ label: '待付款', time: '', type: 'warning', hollow: true, current: true })
+    items.push({ label: '待发货', time: '', type: 'info', hollow: true, current: false })
+    items.push({ label: '待收货', time: '', type: 'info', hollow: true, current: false })
+    items.push({ label: '已完成', time: '', type: 'info', hollow: true, current: false })
+  } else if (s === '1') {
+    // 待发货：已支付，待发货
+    items.push({ label: '支付完成', time: d.paymentTime || '', type: 'success', hollow: false, current: false })
+    items.push({ label: '待发货', time: '', type: 'warning', hollow: true, current: true })
+    items.push({ label: '待收货', time: '', type: 'info', hollow: true, current: false })
+    items.push({ label: '已完成', time: '', type: 'info', hollow: true, current: false })
+  } else if (s === '2') {
+    // 待收货：已支付、已发货
+    items.push({ label: '支付完成', time: d.paymentTime || '', type: 'success', hollow: false, current: false })
+    items.push({ label: '已发货', time: d.deliveryTime || '', type: 'success', hollow: false, current: false })
+    items.push({ label: '待收货', time: '', type: 'warning', hollow: true, current: true })
+    items.push({ label: '已完成', time: '', type: 'info', hollow: true, current: false })
+  } else if (s === '3') {
+    // 已完成：全部完成
+    items.push({ label: '支付完成', time: d.paymentTime || '', type: 'success', hollow: false, current: false })
+    items.push({ label: '已发货', time: d.deliveryTime || '', type: 'success', hollow: false, current: false })
+    items.push({ label: '已收货', time: d.receiverTime || '', type: 'success', hollow: false, current: false })
+    items.push({ label: '已完成', time: d.closingTime || d.receiverTime || '', type: 'success', hollow: false, current: false })
+  } else if (s === '5') {
+    // 已关闭：可能发生在任意阶段
+    if (d.paymentTime) {
+      items.push({ label: '支付完成', time: d.paymentTime, type: 'success', hollow: false, current: false })
+    }
+    if (d.deliveryTime) {
+      items.push({ label: '已发货', time: d.deliveryTime, type: 'success', hollow: false, current: false })
+    }
+    if (d.receiverTime) {
+      items.push({ label: '已收货', time: d.receiverTime, type: 'success', hollow: false, current: false })
+    }
+    items.push({ label: '已关闭', time: d.closingTime || d.updateTime || '', type: 'danger', hollow: false, current: false })
+  }
+
+  return items
 })
 
 const getTableData = async () => {
@@ -416,35 +504,117 @@ onMounted(() => getTableData())
   font-weight: 600;
   font-size: 16px;
 }
-.goods-section,
-.logistics-section {
-  margin-top: 20px;
-  h4 {
-    margin-bottom: 12px;
-    padding-left: 10px;
-    border-left: 3px solid #409eff;
-    color: #303133;
+
+// 顶部门单概览卡片
+.order-overview {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 8px;
+  color: #fff;
+
+  .overview-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    .overview-order-no {
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+  }
+
+  .overview-right {
+    .overview-amount {
+      text-align: right;
+
+      .overview-label {
+        font-size: 12px;
+        opacity: 0.85;
+        display: block;
+        margin-bottom: 2px;
+      }
+
+      .overview-price {
+        font-size: 24px;
+        font-weight: 700;
+        letter-spacing: 1px;
+      }
+    }
   }
 }
+
+// 统一区块标题
+.section-title {
+  margin-bottom: 12px;
+  padding-left: 10px;
+  border-left: 3px solid #409eff;
+  color: #303133;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+// 详情区块
+.detail-section {
+  margin-bottom: 20px;
+}
+
+// 商品合计
 .goods-total {
   margin-top: 12px;
   text-align: right;
   color: #606266;
   font-size: 14px;
 }
+
+// 物流详情
 .logistics-message {
   margin-top: 12px;
   padding: 12px;
   background: #f5f7fa;
   border-radius: 4px;
+
   h5 {
     margin: 0 0 8px;
     color: #303133;
   }
+
   p {
     margin: 0;
     color: #606266;
     white-space: pre-wrap;
+  }
+}
+
+// 时间轴区块
+.timeline-section {
+  background: #fafafa;
+  border-radius: 8px;
+  padding: 16px;
+  height: 100%;
+  min-height: 400px;
+
+  .section-title {
+    margin-bottom: 20px;
+  }
+}
+
+// 时间轴标签
+.timeline-item-content {
+  .timeline-label {
+    font-size: 14px;
+    color: #303133;
+    font-weight: 500;
+
+    &.is-current {
+      color: #e6a23c;
+      font-weight: 600;
+    }
   }
 }
 </style>

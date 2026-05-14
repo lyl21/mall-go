@@ -74,6 +74,16 @@ export default ({ mode }) => {
           changeOrigin: true,
           rewrite: (path) =>
             path.replace(new RegExp('^/plugin'), '')
+        },
+        '/ws': {
+          target: `${env.VITE_BASE_PATH}:${env.VITE_SERVER_PORT}`,
+          ws: true,
+          changeOrigin: true
+        },
+        '/equipment': {
+          target: `${env.VITE_BASE_PATH}:${env.VITE_SERVER_PORT}`,
+          ws: true,
+          changeOrigin: true
         }
       }
     },
@@ -108,7 +118,7 @@ export default ({ mode }) => {
       }),
       vuePlugin(),
       svgBuilder(['./src/plugin/', './src/assets/icons/'], base, outDir, 'assets', mode),
-      [Banner(`\n Build based on gin-vue-admin \n Time : ${timestamp}`)],
+      [Banner(`\n Time : ${timestamp}`)],
       VueFilePathPlugin('./src/pathInfo.json'),
       UnoCSS(),
       vueRootValidator()

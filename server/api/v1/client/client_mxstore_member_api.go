@@ -26,7 +26,7 @@ func (a *ClientMxStoreMemberApi) List(c *gin.Context) {
 		return
 	}
 
-	list, total, err := storeService.StoreMemberServiceApp.GetMxStoreMemberList(req.PageInfo, req.StoreId)
+	list, total, err := storeService.StoreMemberServiceApp.GetMxStoreMemberList(req.PageInfo, req.StoreId, 0)
 	if err != nil {
 		ClientFailWithMessage("获取列表失败", c)
 		return

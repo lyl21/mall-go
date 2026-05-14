@@ -176,8 +176,8 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { UserFilled } from '@element-plus/icons-vue'
-import { getDoorLockList, createDoorLock, updateDoorLock, deleteDoorLock, getDoorLockHistoryList, openDoor } from '@/api/mall'
-import { getWxUserList } from '@/api/wechat'
+import { getDoorLockList, createDoorLock, updateDoorLock, deleteDoorLock, getDoorLockHistoryList, openDoor } from '@/api/mall.js'
+import { getWxUserList } from '@/api/wechat.js'
 
 const searchInfo = ref({})
 const tableData = ref([])

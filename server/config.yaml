@@ -1,6 +1,6 @@
 agora:
-    app-id: "2f6b3ce648174a48bf50f041f3f50f22"
-    app-certificate: "d1d452038c1d46948b9039726f253a4a"
+    app-id: 2f6b3ce648174a48bf50f041f3f50f22
+    app-certificate: d1d452038c1d46948b9039726f253a4a
 aliyun-oss:
     endpoint: yourEndpoint
     access-key-id: yourAccessKeyId
@@ -10,7 +10,7 @@ aliyun-oss:
     base-path: yourBasePath
 autocode:
     web: web/src
-    root: /Users/lll/CODE/XM/gin-vue-admin-main
+    root: /Users/lll/CODE/XM/mall-go
     server: server
     module: github.com/flipped-aurora/gin-vue-admin/server
     ai-path: ""
@@ -25,7 +25,7 @@ aws-s3:
     s3-force-path-style: false
     disable-ssl: false
 captcha:
-    key-long: 6
+    key-long: 4
     img-width: 240
     img-height: 80
     open-captcha: 0

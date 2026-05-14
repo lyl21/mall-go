@@ -58,7 +58,6 @@ func (i *initMenu) InitializeData(ctx context.Context) (next context.Context, er
 		{MenuLevel: 0, Hidden: true, ParentId: 0, Path: "person", Name: "person", Component: "view/person/person.vue", Sort: 4, Meta: Meta{Title: "个人信息", Icon: "message"}},
 		{MenuLevel: 0, Hidden: false, ParentId: 0, Path: "example", Name: "example", Component: "view/example/index.vue", Sort: 7, Meta: Meta{Title: "示例文件", Icon: "management"}},
 		{MenuLevel: 0, Hidden: false, ParentId: 0, Path: "systemTools", Name: "systemTools", Component: "view/systemTools/index.vue", Sort: 5, Meta: Meta{Title: "编程辅助", Icon: "tools"}},
-		{MenuLevel: 0, Hidden: false, ParentId: 0, Path: "https://www.gin-vue-admin.com", Name: "https://www.gin-vue-admin.com", Component: "/", Sort: 0, Meta: Meta{Title: "官方网站", Icon: "customer-gva"}},
 		{MenuLevel: 0, Hidden: false, ParentId: 0, Path: "state", Name: "state", Component: "view/system/state.vue", Sort: 8, Meta: Meta{Title: "服务器状态", Icon: "cloudy"}},
 		{MenuLevel: 0, Hidden: false, ParentId: 0, Path: "plugin", Name: "plugin", Component: "view/routerHolder.vue", Sort: 6, Meta: Meta{Title: "插件系统", Icon: "cherry"}},
 		// 业务模块父级菜单
@@ -113,7 +112,6 @@ func (i *initMenu) InitializeData(ctx context.Context) (next context.Context, er
 		{MenuLevel: 1, Hidden: false, ParentId: menuNameMap["systemTools"], Path: "skills", Name: "skills", Component: "view/systemTools/skills/index.vue", Sort: 8, Meta: Meta{Title: "Skills管理", Icon: "document"}},
 		{MenuLevel: 1, Hidden: false, ParentId: menuNameMap["systemTools"], Path: "picture", Name: "picture", Component: "view/systemTools/autoCode/picture.vue", Sort: 9, Meta: Meta{Title: "AI页面绘制", Icon: "picture-filled"}},
 
-		{MenuLevel: 1, Hidden: false, ParentId: menuNameMap["plugin"], Path: "https://plugin.gin-vue-admin.com/", Name: "https://plugin.gin-vue-admin.com/", Component: "https://plugin.gin-vue-admin.com/", Sort: 0, Meta: Meta{Title: "插件市场", Icon: "shop"}},
 		{MenuLevel: 1, Hidden: false, ParentId: menuNameMap["plugin"], Path: "installPlugin", Name: "installPlugin", Component: "view/systemTools/installPlugin/index.vue", Sort: 1, Meta: Meta{Title: "插件安装", Icon: "box"}},
 		{MenuLevel: 1, Hidden: false, ParentId: menuNameMap["plugin"], Path: "pubPlug", Name: "pubPlug", Component: "view/systemTools/pubPlug/pubPlug.vue", Sort: 3, Meta: Meta{Title: "打包插件", Icon: "files"}},
 		{MenuLevel: 1, Hidden: false, ParentId: menuNameMap["plugin"], Path: "plugin-email", Name: "plugin-email", Component: "plugin/email/view/index.vue", Sort: 4, Meta: Meta{Title: "邮件插件", Icon: "message"}},
@@ -124,6 +122,9 @@ func (i *initMenu) InitializeData(ctx context.Context) (next context.Context, er
 		// {MenuLevel: 1, Hidden: false, ParentId: menuNameMap["store"], Path: "storeMember", Name: "storeMember", Component: "view/store/storeMember.vue", Sort: 2, Meta: Meta{Title: "门店成员", Icon: "avatar"}},
 		{MenuLevel: 1, Hidden: true, ParentId: menuNameMap["store"], Path: "storeMember", Name: "storeMember", Component: "view/store/storeMember.vue", Sort: 2, Meta: Meta{Title: "门店成员", Icon: "avatar"}},
 
+		// 门店管理子菜单 - 门锁管理
+		{MenuLevel: 1, Hidden: false, ParentId: menuNameMap["store"], Path: "doorLock", Name: "doorLock", Component: "view/mall/doorLock.vue", Sort: 5, Meta: Meta{Title: "门锁管理", Icon: "lock"}},
+	
 		// 用户管理子菜单
 		{MenuLevel: 1, Hidden: false, ParentId: menuNameMap["userManager"], Path: "mxUser", Name: "mxUser", Component: "view/store/mxUser.vue", Sort: 1, Meta: Meta{Title: "用户列表", Icon: "user"}},
 		// 设备管理子菜单（父级）
@@ -139,8 +140,7 @@ func (i *initMenu) InitializeData(ctx context.Context) (next context.Context, er
 		{MenuLevel: 1, Hidden: false, ParentId: menuNameMap["mall"], Path: "goodsCategory", Name: "goodsCategory", Component: "view/mall/category.vue", Sort: 1, Meta: Meta{Title: "商品分类", Icon: "grid"}},
 		{MenuLevel: 1, Hidden: false, ParentId: menuNameMap["mall"], Path: "goodsSpu", Name: "goodsSpu", Component: "view/mall/spu.vue", Sort: 2, Meta: Meta{Title: "商品管理", Icon: "goods"}},
 		{MenuLevel: 1, Hidden: false, ParentId: menuNameMap["mall"], Path: "mallOrder", Name: "mallOrder", Component: "view/mall/order.vue", Sort: 3, Meta: Meta{Title: "订单管理", Icon: "list"}},
-		{MenuLevel: 1, Hidden: false, ParentId: menuNameMap["mall"], Path: "doorLock", Name: "doorLock", Component: "view/mall/doorLock.vue", Sort: 6, Meta: Meta{Title: "门锁管理", Icon: "lock"}},
-	}
+}
 
 	// 创建子菜单
 	if err = db.Create(&childMenus).Error; err != nil {

@@ -23,26 +23,26 @@ func (s *UserService) DeleteMxUser(user storeModel.MxUser) (err error) {
 func (s *UserService) UpdateMxUser(user storeModel.MxUser) (err error) {
 	// 只更新允许编辑的字段，避免覆盖自动计算的字段如最近验光时间
 	updateData := map[string]interface{}{
-		"name":                     user.Name,
-		"gender":                   user.Gender,
-		"date_of_birth":            user.DateOfBirth,
-		"age":                      user.Age,
-		"phone_number":             user.PhoneNumber,
-		"qq_number":                user.QQNumber,
-		"email_address":            user.EmailAddress,
-		"identification_number":    user.IdentificationNumber,
-		"wechat":                   user.Wechat,
-		"wx_nick_name":             user.WxNickName,
-		"wx_phone":                 user.WxPhone,
-		"user_role":                user.UserRole,
+		"name":                      user.Name,
+		"gender":                    user.Gender,
+		"date_of_birth":             user.DateOfBirth,
+		"age":                       user.Age,
+		"phone_number":              user.PhoneNumber,
+		"qq_number":                 user.QQNumber,
+		"email_address":             user.EmailAddress,
+		"identification_number":     user.IdentificationNumber,
+		"wechat":                    user.Wechat,
+		"wx_nick_name":              user.WxNickName,
+		"wx_phone":                  user.WxPhone,
+		"user_role":                 user.UserRole,
 		"medical_insurance_account": user.MedicalInsuranceAccount,
-		"city":                     user.City,
-		"contact_address":          user.ContactAddress,
-		"occupation":               user.Occupation,
-		"company":                  user.Company,
-		"remarks":                  user.Remarks,
-		"glasses_need":             user.GlassesNeed,
-		"dominant_eye":             user.DominantEye,
+		"city":                      user.City,
+		"contact_address":           user.ContactAddress,
+		"occupation":                user.Occupation,
+		"company":                   user.Company,
+		"remarks":                   user.Remarks,
+		"glasses_need":              user.GlassesNeed,
+		"dominant_eye":              user.DominantEye,
 	}
 	err = global.GVA_DB.Table("mx_user").Where("user_id = ?", user.UserId).Updates(updateData).Error
 	return err
@@ -53,18 +53,26 @@ func (s *UserService) GetMxUser(id int64) (user storeModel.MxUser, err error) {
 	return
 }
 
-func (s *UserService) GetMxUserList(info request.PageInfo, search string) (list interface{}, total int64, err error) {
+func (s *UserService) GetMxUserList(info request.PageInfo, search storeModel.MxUser) (list interface{}, total int64, err error) {
 	limit := info.PageSize
 	offset := info.PageSize * (info.Page - 1)
-	
-	// 如果 pageSize 为 0，则不分页，返回所有数据
+
 	if limit == 0 {
 		limit = 10000
 	}
-	
+
 	db := global.GVA_DB.Model(&storeModel.MxUser{}).Where("is_delete = ?", 0)
-	if search != "" {
-		db = db.Where("name LIKE ? OR phone_number LIKE ?", "%"+search+"%", "%"+search+"%")
+	if search.Search != "" {
+		db = db.Where("name LIKE ? OR phone_number LIKE ?", "%"+search.Search+"%", "%"+search.Search+"%")
+	}
+	if search.Name != "" {
+		db = db.Where("name LIKE ?", "%"+search.Name+"%")
+	}
+	if search.PhoneNumber != "" {
+		db = db.Where("phone_number LIKE ?", "%"+search.PhoneNumber+"%")
+	}
+	if search.DominantEye != "" {
+		db = db.Where("dominant_eye LIKE ?", "%"+search.DominantEye+"%")
 	}
 	err = db.Count(&total).Error
 	if err != nil {

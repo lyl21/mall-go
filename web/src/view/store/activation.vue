@@ -35,6 +35,8 @@
           </template>
         </el-table-column>
         <el-table-column align="left" label="设备位置" prop="deviceLocation" min-width="120" />
+        <el-table-column align="left" label="IP地址" prop="ipAddress" min-width="130" />
+        <el-table-column align="left" label="IP定位" prop="ipLocation" min-width="140" />
         <el-table-column align="left" label="创建时间" min-width="150">
           <template #default="scope">
             {{ scope.row.CreateTime?.createTime }}
@@ -58,9 +60,9 @@
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="应用" prop="app">
-              <el-select v-model="form.app" placeholder="请选择应用" style="width: 100%">
-                <el-option label="牛头control" value="牛头control" />
+              <el-select v-model="form.app" placeholder="请选择应用" style="width: 100%" :disabled="!isEdit">
                 <el-option label="验光仪" value="验光仪" />
+                <el-option label="牛头control" value="牛头control" />
               </el-select>
             </el-form-item>
           </el-col>
@@ -94,6 +96,12 @@
         <el-form-item label="最后在线时间" v-if="isEdit">
           <el-input v-model="form.lastOnlineTime" placeholder="最后在线时间" disabled />
         </el-form-item>
+        <el-form-item label="IP地址" v-if="isEdit && form.ipAddress">
+          <el-input v-model="form.ipAddress" disabled />
+        </el-form-item>
+        <el-form-item label="IP定位" v-if="isEdit && form.ipLocation">
+          <el-input v-model="form.ipLocation" disabled />
+        </el-form-item>
         <el-form-item label="备注">
           <el-input v-model="form.remark" type="textarea" placeholder="备注" />
         </el-form-item>
@@ -109,9 +117,16 @@
 <script setup>
 import { ref, reactive, onMounted, onUnmounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { useRoute } from 'vue-router'
 import { getActivationCodeList, createActivationCode, updateActivationCode, deleteActivationCode } from '@/api/mxuser'
 
-const searchInfo = ref({})
+const route = useRoute()
+
+// 根据路由名称确定设备类型
+const appType = route.name === 'niutouApp' ? '牛头control' : '验光仪'
+const appTitle = route.name === 'niutouApp' ? '牛头APP' : '验光仪'
+
+const searchInfo = ref({ app: appType })
 const tableData = ref([])
 const page = ref(1)
 const pageSize = ref(10)
@@ -137,13 +152,13 @@ const getTableData = async () => {
 }
 
 const onSubmit = () => { page.value = 1; getTableData() }
-const onReset = () => { searchInfo.value = {}; getTableData() }
+const onReset = () => { searchInfo.value = { app: appType }; getTableData() }
 const handleCurrentChange = (v) => { page.value = v; getTableData() }
 
 const openDialog = (type, row) => {
   isEdit.value = type === 'edit'
   dialogTitle.value = type === 'edit' ? '编辑设备' : '生成激活码'
-  form.value = type === 'edit' ? { ...row } : {}
+  form.value = type === 'edit' ? { ...row } : { app: appType }
   dialogVisible.value = true
 }
 
@@ -172,13 +187,13 @@ const connectWebSocket = () => {
   ws.value = new WebSocket(wsUrl)
 
   ws.value.onopen = () => {
-    console.log('WebSocket连接成功')
+    ws.value.send(JSON.stringify({ type: 'admin' }))
   }
 
   ws.value.onmessage = (event) => {
     const data = JSON.parse(event.data)
     if (data.type === 'deviceStatus') {
-      updateDeviceStatus(data.equipment, data.onlineStatus, data.lastOnlineTime)
+      updateDeviceStatus(data.equipment, data.onlineStatus, data.lastOnlineTime, data.ipAddress, data.ipLocation)
     }
   }
 
@@ -193,11 +208,14 @@ const connectWebSocket = () => {
 }
 
 // 更新设备状态
-const updateDeviceStatus = (equipment, onlineStatus, lastOnlineTime) => {
+const updateDeviceStatus = (equipment, onlineStatus, lastOnlineTime, ipAddress, ipLocation) => {
   const index = tableData.value.findIndex(item => item.equipment === equipment)
   if (index !== -1) {
     tableData.value[index].onlineStatus = onlineStatus
     tableData.value[index].lastOnlineTime = lastOnlineTime
+    if (ipAddress) tableData.value[index].ipAddress = ipAddress
+    if (ipLocation) tableData.value[index].ipLocation = ipLocation
+    if (ipLocation) tableData.value[index].deviceLocation = ipLocation
   }
 }
 

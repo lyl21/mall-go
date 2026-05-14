@@ -34,6 +34,11 @@ func (systemConfigService *SystemConfigService) SetSystemConfig(system system.Sy
 		global.GVA_VP.Set(k, v)
 	}
 	err = global.GVA_VP.WriteConfig()
+	if err != nil {
+		return err
+	}
+	// 立即更新内存中的配置，无需等待文件监听触发
+	err = global.GVA_VP.Unmarshal(&global.GVA_CONFIG)
 	return err
 }
 

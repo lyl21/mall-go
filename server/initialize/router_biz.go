@@ -38,22 +38,21 @@ func initBizRouter(routers ...*gin.RouterGroup) {
 	wsmanager.WSManager.StartHeartbeatCheck()
 	wsmanager.WSManager.StartSessionCleanup()
 
-	// 注册设备WebSocket路由
+	// 注册设备WebSocket路由,后台用
 	publicGroup.GET("/ws/device", func(c *gin.Context) {
 		utils.DeviceWSManager.HandleDeviceWS(c.Writer, c.Request)
 	})
 
-	// 注册用户WebSocket路由（旧版，需要客户端发送JSON消息）- 使用新版Manager
-	publicGroup.GET("/ws/user", func(c *gin.Context) {
-		// 读取第一条消息获取用户信息（userId, userType, storeId）
-		utils.UserWSManager.HandleUserWS(c.Writer, c.Request)
+	// 验光仪设备WebSocket: ws://IP:PORT/equipment/设备ID
+	publicGroup.GET("/equipment/:equipmentId", func(c *gin.Context) {
+		equipmentId := c.Param("equipmentId")
+		utils.DeviceWSManager.HandleDeviceWSByPath(c.Writer, c.Request, equipmentId, "验光仪")
 	})
 
-	// 注册用户WebSocket路由（新版，从URL路径获取userId，自动查库获取门店信息）- 使用新版Manager
+	// 牛头APP WebSocket（远控通信 + 设备在线状态同步）
 	publicGroup.GET("/ws/user/:userId", func(c *gin.Context) {
 		userIdStr := c.Param("userId")
 
-		// 自动从数据库查询用户门店信息
 		userId, err := strconv.ParseInt(userIdStr, 10, 64)
 		if err != nil {
 			global.GVA_LOG.Error("解析userID失败", zap.String("userID", userIdStr), zap.Error(err))
@@ -78,12 +77,22 @@ func initBizRouter(routers ...*gin.RouterGroup) {
 				userType = "customer"
 			}
 		} else {
-			// 未找到门店成员记录，默认顾客
 			userType = "customer"
 			storeId = ""
 			global.GVA_LOG.Warn("WebSocket连接用户未找到门店成员记录",
 				zap.Int64("userId", userId),
 				zap.Error(err))
+		}
+
+		// 牛头APP（验光师）：同步设备在线状态
+		if userType == "optometrist" {
+			utils.EnsureDeviceRecord(userIdStr, "牛头control", member.Username)
+			utils.SyncDeviceStatus(userIdStr, 1)
+			go func() {
+				wsmanager.WSManager.HandleWebSocketWithStrIDAndInfo(c.Writer, c.Request, userIdStr, userType, storeId)
+				utils.SyncDeviceStatus(userIdStr, 0)
+			}()
+			return
 		}
 
 		wsmanager.WSManager.HandleWebSocketWithStrIDAndInfo(c.Writer, c.Request, userIdStr, userType, storeId)
@@ -116,6 +125,7 @@ func initBizRouter(routers ...*gin.RouterGroup) {
 	router.RouterGroupApp.Optometry.InitOptometryDataRouter(optometryGroup)
 	router.RouterGroupApp.Optometry.InitVisionTestResultRouter(optometryGroup)
 	router.RouterGroupApp.Optometry.InitTryOptometryRouter(optometryGroup)
+	router.RouterGroupApp.Optometry.InitErrorReportLogRouter(optometryGroup)
 
 	// 商城管理路由
 	router.RouterGroupApp.Mall.InitGoodsCategoryRouter(privateGroup)
@@ -142,4 +152,7 @@ func initBizRouter(routers ...*gin.RouterGroup) {
 
 	// 客户端设备API（无需 JWT）
 	router.RouterGroupApp.Client.InitClientPublicRouter(publicGroup)
+
+	// 大模型聊天桥接API（无需 JWT，供 Control App 调用）
+	router.RouterGroupApp.Chat.InitChatPublicRouter(publicGroup)
 }

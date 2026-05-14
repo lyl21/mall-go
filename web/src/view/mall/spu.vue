@@ -30,6 +30,7 @@
               :src="getFirstImage(scope.row.picUrls)"
               :preview-src-list="getImageList(scope.row.picUrls)"
               fit="cover"
+              preview-teleported
               style="width: 60px; height: 60px; border-radius: 4px; cursor: pointer;"
             />
             <span v-else>-</span>
@@ -37,8 +38,11 @@
         </el-table-column>
         <el-table-column align="left" label="商品名称" prop="name" min-width="150" show-overflow-tooltip />
         <el-table-column align="left" label="卖点" prop="sellPoint" min-width="150" show-overflow-tooltip />
-        <el-table-column align="left" label="一级分类" prop="categoryFirstName" min-width="100" />
-        <el-table-column align="left" label="二级分类" prop="categorySecondName" min-width="100" />
+        <el-table-column align="left" label="商品分类" min-width="150" show-overflow-tooltip>
+          <template #default="scope">
+            {{ getCategoryPath(scope.row.categoryFirstName, scope.row.categorySecondName) }}
+          </template>
+        </el-table-column>
         <el-table-column align="left" label="销售价" prop="salesPrice" min-width="80" />
         <el-table-column align="left" label="市场价" prop="marketPrice" min-width="80" />
         <el-table-column align="left" label="成本价" prop="costPrice" min-width="80" />
@@ -65,15 +69,16 @@
     <el-dialog v-model="dialogVisible" :title="dialogTitle" width="600px" destroy-on-close>
       <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="商品名称" prop="name"><el-input v-model="form.name" /></el-form-item>
-        <el-form-item label="一级分类" prop="categoryFirst">
-          <el-select v-model="form.categoryFirst" placeholder="请选择一级分类" clearable>
-            <el-option v-for="cat in categoryList" :key="cat.id" :label="cat.name" :value="cat.id" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="二级分类">
-          <el-select v-model="form.categorySecond" placeholder="请选择二级分类" clearable :disabled="!form.categoryFirst">
-            <el-option v-for="cat in secondaryCategoryList" :key="cat.id" :label="cat.name" :value="cat.id" />
-          </el-select>
+        <el-form-item label="商品分类" prop="categoryFirst">
+          <el-cascader
+            v-model="form.cascaderValue"
+            :options="cascaderOptions"
+            :props="{ label: 'name', value: 'id', children: 'children', checkStrictly: false, emitPath: true }"
+            placeholder="请选择商品分类"
+            clearable
+            filterable
+            style="width: 100%"
+          />
         </el-form-item>
         <el-form-item label="卖点"><el-input v-model="form.sellPoint" /></el-form-item>
         <el-form-item label="主图">
@@ -109,16 +114,16 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, watch } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
-import { getGoodsSpuList, createGoodsSpu, updateGoodsSpu, deleteGoodsSpu, getGoodsCategoryList } from '@/api/mall'
+import { getGoodsSpuList, createGoodsSpu, updateGoodsSpu, deleteGoodsSpu, getGoodsCategoryTree } from '@/api/mall'
 import { getUrl } from '@/utils/image'
 
 const searchInfo = ref({})
 const tableData = ref([])
-const categoryList = ref([])
-const secondaryCategoryList = ref([])
+const cascaderOptions = ref([])
+const flatCategoryMap = ref({})
 const page = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
@@ -129,24 +134,60 @@ const form = ref({})
 const picUrlList = ref([])
 const rules = reactive({ name: [{ required: true, message: '请输入商品名称', trigger: 'blur' }], categoryFirst: [{ required: true, message: '请选择分类', trigger: 'change' }] })
 
-// 监听一级分类变化，加载二级分类
-watch(() => form.value.categoryFirst, async (newVal) => {
-  if (newVal) {
-    const res = await getGoodsCategoryList({ page: 1, pageSize: 100, parentId: newVal })
-    if (res.code === 0) {
-      secondaryCategoryList.value = res.data.list || []
-    }
-    // 编辑时保留二级分类的值，但新增时清空
-    if (form.value.id && form.value.categorySecond) {
-      // 保持现有值
+
+// 构建级联选择器的树形选项
+const buildTree = (list) => {
+  const map = {}
+  const roots = []
+  list.forEach(item => {
+    map[item.id] = { id: item.id, name: item.name, children: [] }
+  })
+  list.forEach(item => {
+    const node = map[item.id]
+    const pid = item.parentId || '0'
+    if (pid && pid !== '0' && map[pid]) {
+      map[pid].children.push(node)
     } else {
-      form.value.categorySecond = ''
+      roots.push(node)
     }
-  } else {
-    secondaryCategoryList.value = []
-    form.value.categorySecond = ''
+  })
+  return roots
+}
+
+// 加载全部分类树
+const getCategoryList = async () => {
+  const res = await getGoodsCategoryTree()
+  if (res.code === 0) {
+    const all = res.data || []
+    // 构建 flatMap 用于显示
+    flatCategoryMap.value = {}
+    all.forEach(item => { flatCategoryMap.value[item.id] = item.name })
+    cascaderOptions.value = buildTree(all)
   }
-})
+}
+
+// 从分类ID路径获取显示文本 "一级 > 二级"
+const getCategoryPath = (firstName, secondName) => {
+  if (!firstName && !secondName) return '-'
+  if (firstName && secondName) return `${firstName} / ${secondName}`
+  return firstName || secondName || '-'
+}
+
+// 将 categoryFirst + categorySecond 转为 cascader 值
+const toCascaderValue = (first, second) => {
+  if (!first) return []
+  if (second) return [first, second]
+  return [first]
+}
+
+// 从 cascader 值提取 categoryFirst 和 categorySecond
+const fromCascaderValue = (val) => {
+  if (!val || !val.length) return { categoryFirst: '', categorySecond: '' }
+  return {
+    categoryFirst: val[0] || '',
+    categorySecond: val[1] || ''
+  }
+}
 
 // 上传请求头（包含认证token）
 const uploadHeaders = ref({
@@ -156,12 +197,14 @@ const uploadHeaders = ref({
 // 监听 picUrlList 变化，同步到 form.picUrls
 watch(picUrlList, (val) => {
   const urls = val.map(item => {
-    // 优先使用已设置的url，否则从response中获取
-    if (item.url) return item.url
-    if (item.response?.code === 0 && item.response?.data?.file?.url) {
-      return item.response.data.file.url
+    let url = null
+    if (item.url) url = item.url
+    else if (item.response?.code === 0 && item.response?.data?.file?.url) {
+      url = getFullImageUrl(item.response.data.file.url)
     }
-    return null
+    if (!url) return null
+    // 去掉 /api 前缀，存储后端原始路径
+    return url.replace(/^\/api/, '')
   }).filter(Boolean)
   form.value.picUrls = JSON.stringify(urls)
 }, { deep: true })
@@ -169,9 +212,7 @@ watch(picUrlList, (val) => {
 // 图片上传成功
 const handlePicSuccess = (response, uploadFile) => {
   if (response.code === 0 && response.data?.file?.url) {
-    // 设置uploadFile的url属性用于显示
-    uploadFile.url = response.data.file.url
-    // 强制触发watch更新
+    uploadFile.url = getFullImageUrl(response.data.file.url)
     picUrlList.value = [...picUrlList.value]
   }
 }
@@ -179,9 +220,11 @@ const handlePicSuccess = (response, uploadFile) => {
 // 图片移除
 const handlePicRemove = (uploadFile, uploadFiles) => {
   const urls = uploadFiles.map(item => {
-    if (item.url) return item.url
-    if (item.response?.data?.file?.url) return item.response.data.file.url
-    return null
+    let url = null
+    if (item.url) url = item.url
+    else if (item.response?.data?.file?.url) url = item.response.data.file.url
+    if (!url) return null
+    return url.replace(/^\/api/, '')
   }).filter(Boolean)
   form.value.picUrls = JSON.stringify(urls)
 }
@@ -203,37 +246,31 @@ const handleCurrentChange = (v) => { page.value = v; getTableData() }
 const openDialog = (type, row) => {
   dialogTitle.value = type === 'add' ? '新增商品' : '编辑商品'
   form.value = type === 'add' ? { shelf: 1, stock: 0, sort: 0 } : { ...row }
+  // 设置级联选择器的值
+  form.value.cascaderValue = type === 'add' ? [] : toCascaderValue(row?.categoryFirst, row?.categorySecond)
   // 解析 picUrls 为图片列表
   picUrlList.value = []
   const picUrls = type === 'add' ? null : row?.picUrls
   if (picUrls) {
     try {
       const urls = JSON.parse(picUrls)
-      picUrlList.value = urls.map(url => ({ name: url.split('/').pop(), url }))
+      picUrlList.value = urls.map(url => ({ name: url.split('/').pop(), url: getFullImageUrl(url) }))
     } catch (e) {
       const urls = picUrls.split(',').filter(Boolean)
-      picUrlList.value = urls.map(url => ({ name: url.split('/').pop(), url }))
+      picUrlList.value = urls.map(url => ({ name: url.split('/').pop(), url: getFullImageUrl(url) }))
     }
   }
-  // 编辑时加载二级分类
-  if (type === 'edit' && row?.categoryFirst) {
-    getSecondaryCategoryList(row.categoryFirst)
-  }
   dialogVisible.value = true
-}
-
-// 获取二级分类列表
-const getSecondaryCategoryList = async (parentId) => {
-  const res = await getGoodsCategoryList({ page: 1, pageSize: 100, parentId })
-  if (res.code === 0) {
-    secondaryCategoryList.value = res.data.list || []
-  }
 }
 
 const submitForm = async () => {
   await formRef.value.validate(async (valid) => {
     if (!valid) return
-    const res = form.value.id ? await updateGoodsSpu(form.value) : await createGoodsSpu(form.value)
+    // 从级联选择器值中提取一级/二级分类
+    const { categoryFirst, categorySecond } = fromCascaderValue(form.value.cascaderValue)
+    const data = { ...form.value, categoryFirst, categorySecond }
+    delete data.cascaderValue
+    const res = data.id ? await updateGoodsSpu(data) : await createGoodsSpu(data)
     if (res.code === 0) { ElMessage.success('操作成功'); dialogVisible.value = false; getTableData() }
   })
 }

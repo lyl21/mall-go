@@ -41,6 +41,13 @@ export const deleteGoodsCategory = (data) => {
     data
   })
 }
+export const getGoodsCategoryTree = () => {
+  return service({
+    // url: '/mall/getGoodsCategoryTree', method: 'get'
+    url: '/mall/goodsCategoryTree',
+    method: 'get'
+  })
+}
 
 // ========== 商品SPU ==========
 export const getGoodsSpuList = (data) => {

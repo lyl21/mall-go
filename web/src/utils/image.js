@@ -93,17 +93,19 @@ export default class ImageCompress {
 
 const path = import.meta.env.VITE_FILE_API
 export const getUrl = (url) => {
-  if (url && url.slice(0, 4) !== 'http') {
-    if (path === '/') {
-      return url
-    }
-    if (url.slice(0, 1) === '/') {
-      return path + url
-    }
-    return path + '/' + url
-  } else {
+  if (!url) return ''
+  if (url.slice(0, 4) === 'http') {
     return url
   }
+  // 去掉可能已有的 /api 前缀，避免重复
+  const cleanUrl = url.replace(/^\/api/, '')
+  if (path === '/') {
+    return cleanUrl
+  }
+  if (cleanUrl.slice(0, 1) === '/') {
+    return path + cleanUrl
+  }
+  return path + '/' + cleanUrl
 }
 
 const VIDEO_EXTENSIONS = ['.mp4', '.mov', '.webm', '.ogg']

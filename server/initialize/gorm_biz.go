@@ -19,6 +19,7 @@ func bizModel() error {
 		&storeModel.MxActivationCode{},
 		&storeModel.MxPicture{},
 		&storeModel.InstallingPackage{},
+		&storeModel.ErrorReportLog{},
 		// 验光管理
 		&optometryModel.OptometryRecord{},
 		&optometryModel.OptometryData{},

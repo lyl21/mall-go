@@ -132,6 +132,7 @@ func (s *StoreMemberApi) GetMxStoreMember(c *gin.Context) {
 // @Param     page     query     int                                true  "页码"
 // @Param     pageSize query     int                                true  "每页大小"
 // @Param     storeId  query     int64                              true  "门店ID"
+// @Param     post     query     int                                false "职位(1店长 2验光师 3顾客)"
 // @Success   200      {object}  response.Response{data=response.PageResult,msg=string}  "获取成员列表"
 // @Router    /store/mxStoreMemberList [get]
 func (s *StoreMemberApi) GetMxStoreMemberList(c *gin.Context) {
@@ -146,7 +147,12 @@ func (s *StoreMemberApi) GetMxStoreMemberList(c *gin.Context) {
 		response.FailWithMessage("参数错误", c)
 		return
 	}
-	list, total, err := storeMemberService.GetMxStoreMemberList(pageInfo, storeId)
+	postStr := c.Query("post")
+	var post int
+	if postStr != "" {
+		post, _ = strconv.Atoi(postStr)
+	}
+	list, total, err := storeMemberService.GetMxStoreMemberList(pageInfo, storeId, post)
 	if err != nil {
 		global.GVA_LOG.Error("获取失败!", zap.Error(err))
 		response.FailWithMessage("获取失败:"+err.Error(), c)

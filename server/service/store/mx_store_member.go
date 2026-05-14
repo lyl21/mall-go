@@ -76,17 +76,20 @@ func (s *StoreMemberService) DeleteMxStoreMemberByStoreIds(storeIds []int64) (er
 	return err
 }
 
-func (s *StoreMemberService) GetMxStoreMemberList(info request.PageInfo, storeId int64) (list interface{}, total int64, err error) {
+func (s *StoreMemberService) GetMxStoreMemberList(info request.PageInfo, storeId int64, post int) (list interface{}, total int64, err error) {
 	limit := info.PageSize
 	offset := info.PageSize * (info.Page - 1)
-	
+
 	if limit == 0 {
 		limit = 10000
 	}
-	
+
 	db := global.GVA_DB.Table("mx_store_member AS msm").
 		Joins("LEFT JOIN mx_user AS mu ON mu.user_id = msm.user_id AND mu.is_delete = 0").
 		Where("msm.store_id = ? AND msm.is_delete = ?", storeId, 0)
+	if post > 0 {
+		db = db.Where("msm.post = ?", post)
+	}
 	err = db.Count(&total).Error
 	if err != nil {
 		return

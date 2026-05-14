@@ -1,6 +1,7 @@
 package router
 
 import (
+	"github.com/flipped-aurora/gin-vue-admin/server/router/chat"
 	"github.com/flipped-aurora/gin-vue-admin/server/router/client"
 	"github.com/flipped-aurora/gin-vue-admin/server/router/example"
 	"github.com/flipped-aurora/gin-vue-admin/server/router/mall"
@@ -20,4 +21,5 @@ type RouterGroup struct {
 	Mall      mall.RouterGroup
 	Wechat    wechat.RouterGroup
 	Client    client.RouterGroup
+	Chat      chat.RouterGroup
 }

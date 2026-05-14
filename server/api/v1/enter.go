@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"github.com/flipped-aurora/gin-vue-admin/server/api/v1/chat"
 	"github.com/flipped-aurora/gin-vue-admin/server/api/v1/client"
 	"github.com/flipped-aurora/gin-vue-admin/server/api/v1/example"
 	"github.com/flipped-aurora/gin-vue-admin/server/api/v1/mall"
@@ -20,4 +21,5 @@ type ApiGroup struct {
 	MallApiGroup       mall.ApiGroup
 	WechatApiGroup     wechat.ApiGroup
 	ClientApiGroup     client.ApiGroup
+	ChatApiGroup       chat.ApiGroup
 }

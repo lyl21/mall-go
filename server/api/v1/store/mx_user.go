@@ -119,10 +119,13 @@ func (u *UserApi) GetMxUser(c *gin.Context) {
 // @Security  ApiKeyAuth
 // @accept    application/json
 // @Produce   application/json
-// @Param     page     query     int                                true  "页码"
-// @Param     pageSize query     int                                true  "每页大小"
-// @Param     search   query     string                             false "搜索关键词"
-// @Success   200      {object}  response.Response{data=response.PageResult,msg=string}  "获取用户列表"
+// @Param     page         query     int                                true  "页码"
+// @Param     pageSize     query     int                                true  "每页大小"
+// @Param     search       query     string                             false "搜索关键词"
+// @Param     name         query     string                             false "姓名"
+// @Param     phoneNumber  query     string                             false "手机号码"
+// @Param     dominantEye  query     string                             false "主视眼"
+// @Success   200          {object}  response.Response{data=response.PageResult,msg=string}  "获取用户列表"
 // @Router    /store/mxUserList [get]
 func (u *UserApi) GetMxUserList(c *gin.Context) {
 	var pageInfo request.PageInfo
@@ -131,7 +134,12 @@ func (u *UserApi) GetMxUserList(c *gin.Context) {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	search := c.Query("search")
+	var search storeModel.MxUser
+	search.Name = c.Query("name")
+	search.PhoneNumber = c.Query("phoneNumber")
+	search.DominantEye = c.Query("dominantEye")
+	search.Search = c.Query("search")
+
 	list, total, err := userService.GetMxUserList(pageInfo, search)
 	if err != nil {
 		global.GVA_LOG.Error("获取失败!", zap.Error(err))

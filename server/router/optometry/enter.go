@@ -9,6 +9,7 @@ type RouterGroup struct {
 	OptometryDataRouter
 	VisionTestResultRouter
 	TryOptometryRouter
+	ErrorReportLogRouter
 }
 
 var (
@@ -16,4 +17,5 @@ var (
 	optometryDataApi    = api.ApiGroupApp.OptometryApiGroup.OptometryDataApi
 	visionTestResultApi = api.ApiGroupApp.OptometryApiGroup.VisionTestResultApi
 	tryOptometryApi     = api.ApiGroupApp.OptometryApiGroup.TryOptometryApi
+	errorReportLogApi   = api.ApiGroupApp.OptometryApiGroup.ErrorReportLogApi
 )

@@ -16,38 +16,23 @@
           <div
             class="font-sans text-4xl font-bold text-center mb-4 dark:text-white"
           >
-            GIN-VUE-ADMIN
+            系统初始化
           </div>
           <p class="text-gray-600 dark:text-gray-300 mb-2">初始化须知</p>
+      
           <p class="text-gray-600 dark:text-gray-300 mb-2">
-            1.您需有用一定的VUE和GOLANG基础
+            1. 请确认数据库连接信息正确
           </p>
           <p class="text-gray-600 dark:text-gray-300 mb-2">
-            2.请您确认是否已经阅读过<a
-              class="text-blue-600 font-bold"
-              href="https://www.gin-vue-admin.com"
-              target="_blank"
-              >官方文档</a
-            >
-            <a
-              class="text-blue-600 font-bold"
-              href="https://www.bilibili.com/video/BV1kv4y1g7nT?p=2"
-              target="_blank"
-              >初始化视频</a
-            >
+            2.请您确认是否了解后续的配置流程
           </p>
           <p class="text-gray-600 dark:text-gray-300 mb-2">
-            3.请您确认是否了解后续的配置流程
-          </p>
-          <p class="text-gray-600 dark:text-gray-300 mb-2">
-            4.如果您使用mysql数据库，请确认数据库引擎为<span
+            3.如果您使用mysql数据库，请确认数据库引擎为<span
               class="text-red-600 font-bold text-3xl ml-2"
               >innoDB</span
             >
           </p>
-          <p class="text-gray-600 dark:text-gray-300 mb-2">
-            注：开发组不为文档中书写过的内容提供无偿服务
-          </p>
+       
           <p class="flex items-center justify-between mt-8">
             <el-button type="primary" size="large" @click="goDoc">
               阅读文档
@@ -158,7 +143,7 @@
   }
 
   const goDoc = () => {
-    window.open('https://www.gin-vue-admin.com/guide/start-quickly/env.html')
+    router.push({ name: 'Login' })
   }
 
   const out = ref(false)
@@ -286,8 +271,6 @@
             center: true
           }
         ).then(() => {
-          // 点击确认按钮，打开AI配置文档
-          window.open('https://www.gin-vue-admin.com/guide/server/mcp.html', '_blank')
           router.push({ name: 'Login' })
         }).catch(() => {
           // 点击取消按钮或关闭弹窗，直接跳转到登录页

@@ -154,17 +154,7 @@ const buildTree = (list) => {
   return roots
 }
 
-// 加载全部分类树
-const getCategoryList = async () => {
-  const res = await getGoodsCategoryTree()
-  if (res.code === 0) {
-    const all = res.data || []
-    // 构建 flatMap 用于显示
-    flatCategoryMap.value = {}
-    all.forEach(item => { flatCategoryMap.value[item.id] = item.name })
-    cascaderOptions.value = buildTree(all)
-  }
-}
+
 
 // 从分类ID路径获取显示文本 "一级 > 二级"
 const getCategoryPath = (firstName, secondName) => {

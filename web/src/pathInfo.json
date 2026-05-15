@@ -41,6 +41,7 @@
   "/src/view/mall/category.vue": "Category",
   "/src/view/mall/order.vue": "Order",
   "/src/view/mall/spu.vue": "Spu",
+  "/src/view/optometry/errorReportLog.vue": "ErrorReportLog",
   "/src/view/optometry/optometryData.vue": "OptometryData",
   "/src/view/optometry/records.vue": "Records",
   "/src/view/optometry/visionTest.vue": "VisionTest",

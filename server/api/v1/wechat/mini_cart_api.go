@@ -13,19 +13,27 @@ import (
 // MiniCartApi 小程序购物车API
 type MiniCartApi struct{}
 
+// getWxUserIdFromContext 从 JWT context 获取小程序当前用户的 wxUserId
+func getWxUserIdFromContext(c *gin.Context) string {
+	val, exists := c.Get("wxUserId")
+	if !exists {
+		return ""
+	}
+	return val.(string)
+}
+
 // GetCartPage 获取购物车列表
 // @Tags      MiniCart
-// @Summary   小程序获取购物车列表
+// @Summary   小程序获取购物车列表（从JWT获取用户身份）
 // @Produce   application/json
-// @Param     userId    query     string  true   "用户ID"
 // @Param     page      query     int     false  "页码"
 // @Param     pageSize  query     int     false  "每页数量"
 // @Success   200  {object}  response.Response{data=[]mall.ShoppingCart}  "获取成功"
 // @Router    /weixin/api/ma/shoppingcart/page [get]
 func (a *MiniCartApi) GetCartPage(c *gin.Context) {
-	userId := c.Query("userId")
+	userId := getWxUserIdFromContext(c)
 	if userId == "" {
-		response.FailWithMessage("用户ID不能为空", c)
+		response.FailWithMessage("请先登录", c)
 		return
 	}
 	page := utils.GetIntQuery(c, "page", 1)
@@ -49,15 +57,14 @@ func (a *MiniCartApi) GetCartPage(c *gin.Context) {
 
 // GetCartCount 获取购物车商品数量
 // @Tags      MiniCart
-// @Summary   小程序获取购物车数量
+// @Summary   小程序获取购物车数量（从JWT获取用户身份）
 // @Produce   application/json
-// @Param     userId  query     string  true  "用户ID"
 // @Success   200  {object}  response.Response{data=int}  "获取成功"
 // @Router    /weixin/api/ma/shoppingcart/count [get]
 func (a *MiniCartApi) GetCartCount(c *gin.Context) {
-	userId := c.Query("userId")
+	userId := getWxUserIdFromContext(c)
 	if userId == "" {
-		response.FailWithMessage("用户ID不能为空", c)
+		response.FailWithMessage("请先登录", c)
 		return
 	}
 
@@ -74,7 +81,7 @@ func (a *MiniCartApi) GetCartCount(c *gin.Context) {
 
 // AddCart 添加商品到购物车
 // @Tags      MiniCart
-// @Summary   小程序添加商品到购物车
+// @Summary   小程序添加商品到购物车（userId从JWT获取，忽略传参）
 // @Accept    application/json
 // @Produce   application/json
 // @Param     data  body      mall.ShoppingCart  true  "购物车信息"
@@ -87,16 +94,22 @@ func (a *MiniCartApi) AddCart(c *gin.Context) {
 		return
 	}
 
-	if cart.UserId == "" || cart.SpuId == "" {
-		response.FailWithMessage("用户ID和商品ID不能为空", c)
+	userId := getWxUserIdFromContext(c)
+	if userId == "" {
+		response.FailWithMessage("请先登录", c)
+		return
+	}
+	cart.UserId = userId // JWT 强制覆盖
+
+	if cart.SpuId == "" {
+		response.FailWithMessage("商品ID不能为空", c)
 		return
 	}
 
 	// 检查商品是否已在购物车
 	var existing mall.ShoppingCart
-	err := global.GVA_DB.Where("user_id = ? AND spu_id = ? AND del_flag = ?", cart.UserId, cart.SpuId, "0").First(&existing).Error
+	err := global.GVA_DB.Where("user_id = ? AND spu_id = ? AND del_flag = ?", userId, cart.SpuId, "0").First(&existing).Error
 	if err == nil {
-		// 已存在，更新数量
 		existing.Quantity += cart.Quantity
 		if err := global.GVA_DB.Save(&existing).Error; err != nil {
 			global.GVA_LOG.Error("更新购物车失败", zap.Error(err))
@@ -107,14 +120,12 @@ func (a *MiniCartApi) AddCart(c *gin.Context) {
 		return
 	}
 
-	// 获取商品信息
 	var goods mall.GoodsSpu
 	if err := global.GVA_DB.Where("id = ?", cart.SpuId).First(&goods).Error; err == nil {
 		cart.SpuName = goods.Name
 		if goods.SalesPrice != nil {
 			cart.AddPrice = *goods.SalesPrice
 		}
-		// 解析图片URL
 		if goods.PicUrls != "" {
 			cart.PicUrl = utils.ParseFirstImage(goods.PicUrls)
 		}

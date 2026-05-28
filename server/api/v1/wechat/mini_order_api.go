@@ -1,6 +1,7 @@
 package wechat
 
 import (
+	"errors"
 	"time"
 
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
@@ -19,9 +20,8 @@ type MiniOrderApi struct{}
 
 // PlaceOrderDTO 下单参数
 type PlaceOrderDTO struct {
-	UserId        string               `json:"userId" binding:"required"`
 	UserAddressId string               `json:"userAddressId" binding:"required"`
-	PaymentWay    string               `json:"paymentWay"` // 1货到付款 2在线支付
+	PaymentWay    string               `json:"paymentWay"`
 	UserMessage   string               `json:"userMessage"`
 	Skus          []PlaceOrderGoodsDTO `json:"skus" binding:"required"`
 }
@@ -34,20 +34,19 @@ type PlaceOrderGoodsDTO struct {
 	// 注意：原Java实现中前端会传入paymentPrice，但这里为了安全，后端重新计算
 }
 
-// GetOrderPage 获取订单列表
+// GetOrderPage 获取订单列表（从JWT获取用户身份）
 // @Tags      MiniOrder
 // @Summary   小程序获取订单列表
 // @Produce   application/json
-// @Param     userId    query     string  true   "用户ID"
 // @Param     status    query     string  false  "订单状态"
 // @Param     page      query     int     false  "页码"
 // @Param     pageSize  query     int     false  "每页数量"
 // @Success   200  {object}  response.Response{data=[]mall.OrderInfo}  "获取成功"
 // @Router    /weixin/api/ma/orderinfo/page [get]
 func (a *MiniOrderApi) GetOrderPage(c *gin.Context) {
-	userId := c.Query("userId")
+	userId := getWxUserIdFromContext(c)
 	if userId == "" {
-		response.FailWithMessage("用户ID不能为空", c)
+		response.FailWithMessage("请先登录", c)
 		return
 	}
 	status := c.Query("status")
@@ -74,6 +73,25 @@ func (a *MiniOrderApi) GetOrderPage(c *gin.Context) {
 	response.OkWithData(gin.H{"list": list, "total": total}, c)
 }
 
+// validateOrderOwner 校验订单是否属于当前 JWT 用户
+func validateOrderOwner(c *gin.Context, orderId string) (*mall.OrderInfo, error) {
+	userId := getWxUserIdFromContext(c)
+	if userId == "" {
+		return nil, errors.New("请先登录")
+	}
+
+	var order mall.OrderInfo
+	if err := global.GVA_DB.Where("id = ? AND del_flag = ?", orderId, "0").First(&order).Error; err != nil {
+		return nil, errors.New("订单不存在")
+	}
+
+	if order.UserId != userId {
+		return nil, errors.New("无权操作此订单")
+	}
+
+	return &order, nil
+}
+
 // GetOrderById 获取订单详情
 // @Tags      MiniOrder
 // @Summary   小程序获取订单详情
@@ -88,13 +106,14 @@ func (a *MiniOrderApi) GetOrderById(c *gin.Context) {
 		return
 	}
 
-	var order mall.OrderInfo
-	err := global.GVA_DB.Where("id = ? AND del_flag = ?", id, "0").Preload("OrderItems").First(&order).Error
+	order, err := validateOrderOwner(c, id)
 	if err != nil {
-		global.GVA_LOG.Error("获取订单详情失败", zap.Error(err))
-		response.FailWithMessage("订单不存在", c)
+		response.FailWithMessage(err.Error(), c)
 		return
 	}
+
+	// 预加载订单商品
+	global.GVA_DB.Model(order).Preload("OrderItems").Find(order)
 
 	// 加载物流信息
 	if order.LogisticsId != nil && *order.LogisticsId != "" {
@@ -122,12 +141,18 @@ func (a *MiniOrderApi) CreateOrder(c *gin.Context) {
 		return
 	}
 
+	userId := getWxUserIdFromContext(c)
+	if userId == "" {
+		response.FailWithMessage("请先登录", c)
+		return
+	}
+
 	// 使用事务处理整个订单创建过程
 	tx := global.GVA_DB.Begin()
 
 	// 获取地址信息
 	var address mall.UserAddress
-	if err := tx.Where("id = ? AND user_id = ?", dto.UserAddressId, dto.UserId).First(&address).Error; err != nil {
+	if err := tx.Where("id = ? AND user_id = ?", dto.UserAddressId, userId).First(&address).Error; err != nil {
 		tx.Rollback()
 		response.FailWithMessage("收货地址不存在", c)
 		return
@@ -137,7 +162,7 @@ func (a *MiniOrderApi) CreateOrder(c *gin.Context) {
 	status := "0" // 待付款
 	order := mall.OrderInfo{
 		Id:           uuid.New().String(),
-		UserId:       dto.UserId,
+		UserId:       userId,
 		OrderNo:      generateOrderNo(),
 		IsPay:        "0",
 		PaymentWay:   dto.PaymentWay,
@@ -215,7 +240,7 @@ func (a *MiniOrderApi) CreateOrder(c *gin.Context) {
 		goodsToUpdate = append(goodsToUpdate, &goods)
 
 		// 删除购物车（在事务中）
-		if err := tx.Where("spu_id = ? AND user_id = ?", goods.Id, dto.UserId).Delete(&mall.ShoppingCart{}).Error; err != nil {
+		if err := tx.Where("spu_id = ? AND user_id = ?", goods.Id, userId).Delete(&mall.ShoppingCart{}).Error; err != nil {
 			global.GVA_LOG.Error("删除购物车失败", zap.Error(err))
 			// 购物车删除失败不影响订单创建，继续处理
 		}
@@ -322,15 +347,14 @@ func (a *MiniOrderApi) CancelOrder(c *gin.Context) {
 		return
 	}
 
-	// 使用事务
-	tx := global.GVA_DB.Begin()
-
-	var order mall.OrderInfo
-	if err := tx.Where("id = ? AND del_flag = ?", id, "0").First(&order).Error; err != nil {
-		tx.Rollback()
-		response.FailWithMessage("订单不存在", c)
+	order, err := validateOrderOwner(c, id)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
 		return
 	}
+
+	// 使用事务
+	tx := global.GVA_DB.Begin()
 
 	// 只有未支付订单能取消
 	if order.IsPay != "0" {
@@ -396,9 +420,9 @@ func (a *MiniOrderApi) ReceiveOrder(c *gin.Context) {
 		return
 	}
 
-	var order mall.OrderInfo
-	if err := global.GVA_DB.Where("id = ? AND del_flag = ?", id, "0").First(&order).Error; err != nil {
-		response.FailWithMessage("订单不存在", c)
+	order, err := validateOrderOwner(c, id)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
 		return
 	}
 
@@ -412,7 +436,7 @@ func (a *MiniOrderApi) ReceiveOrder(c *gin.Context) {
 	status := "3"
 	now := common.DateTime{Time: time.Now()}
 	if err := global.GVA_DB.Model(&order).Updates(map[string]interface{}{
-		"status":       &status,
+		"status":        &status,
 		"receiver_time": &now,
 	}).Error; err != nil {
 		global.GVA_LOG.Error("确认收货失败", zap.Error(err))

@@ -37,6 +37,11 @@ func (a *MiniAgoraApi) GetAgoraToken(c *gin.Context) {
 		return
 	}
 
+	// 强制使用 JWT 中的 wxUserId 作为 Agora 用户标识
+	if wxId, exists := c.Get("wxUserId"); exists {
+		req.UserId = wxId.(string)
+	}
+
 	// 获取Agora配置
 	appId := global.GVA_CONFIG.Agora.AppId
 	appCertificate := global.GVA_CONFIG.Agora.AppCertificate
@@ -49,12 +54,17 @@ func (a *MiniAgoraApi) GetAgoraToken(c *gin.Context) {
 	// 生成Channel名称
 	channelName := "channel_" + req.RoomId
 
-	// 生成UID（使用用户ID的哈希值）
+	// 生成UID
 	uid := hashStringToUint32(req.UserId)
 
-	// 生成Token（简化版，实际应该使用Agora SDK）
-	// 这里返回模拟数据，实际使用时需要集成Agora SDK
-	token := generateMockToken(appId, channelName, req.UserId)
+	// 使用真实 Agora SDK 生成 Token
+	rtcGen := utils.NewAgoraTokenGenerator()
+	token := rtcGen.GenerateRtcToken(channelName, int(uid))
+	if token == "" {
+		global.GVA_LOG.Warn("Agora Token 生成失败，降级为 mock",
+			zap.String("channel", channelName))
+		token = generateMockToken(appId, channelName, req.UserId)
+	}
 
 	global.GVA_LOG.Info("生成Agora Token",
 		zap.String("channel", channelName),
@@ -93,6 +103,11 @@ func (a *MiniAgoraApi) JoinRoom(c *gin.Context) {
 		return
 	}
 
+	// 强制使用 JWT 中的 wxUserId
+	if wxId, exists := c.Get("wxUserId"); exists {
+		req.UserId = wxId.(string)
+	}
+
 	if req.Role == "" {
 		req.Role = "participant"
 	}
@@ -107,20 +122,20 @@ func (a *MiniAgoraApi) JoinRoom(c *gin.Context) {
 
 	if exists {
 		response.OkWithData(gin.H{
-			"roomId":      req.RoomId,
-			"role":        req.Role,
-			"existing":    true,
-			"roomInfo":    roomInfo,
-			"wsUrl":       "/ws/agora",
-			"message":     "房间已存在，将加入现有房间",
+			"roomId":   req.RoomId,
+			"role":     req.Role,
+			"existing": true,
+			"roomInfo": roomInfo,
+			"wsUrl":    "/ws/agora",
+			"message":  "房间已存在，将加入现有房间",
 		}, c)
 	} else {
 		response.OkWithData(gin.H{
-			"roomId":      req.RoomId,
-			"role":        req.Role,
-			"existing":    false,
-			"wsUrl":       "/ws/agora",
-			"message":     "创建新房间",
+			"roomId":   req.RoomId,
+			"role":     req.Role,
+			"existing": false,
+			"wsUrl":    "/ws/agora",
+			"message":  "创建新房间",
 		}, c)
 	}
 }

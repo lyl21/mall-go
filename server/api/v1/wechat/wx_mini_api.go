@@ -1,7 +1,9 @@
 package wechat
 
 import (
+	"github.com/flipped-aurora/gin-vue-admin/server/middleware"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/common/response"
+	"github.com/flipped-aurora/gin-vue-admin/server/utils"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 
@@ -35,22 +37,37 @@ func (a *WxMiniApi) MiniLogin(c *gin.Context) {
 	response.OkWithDetailed(result, "登录成功", c)
 }
 
-// GetMyOptometryRecords 获取当前微信用户的验光记录
+// MiniLogout 小程序退出登录
+// @Tags      WxMini
+// @Summary   微信小程序退出登录（清除JWT Token）
+// @Security  ApiKeyAuth
+// @accept    application/json
+// @Produce   application/json
+// @Success   200  {object}  response.Response{msg=string}  "退出成功"
+// @Router    /mini/logout [post]
+func (a *WxMiniApi) MiniLogout(c *gin.Context) {
+	token := middleware.GetMiniToken(c)
+	if token != "" {
+		utils.ClearMiniToken(token)
+	}
+	response.OkWithMessage("退出成功", c)
+}
+
+// GetMyOptometryRecords 获取当前微信用户的验光记录（从JWT中获取openId）
 // @Tags      WxMini
 // @Summary   小程序获取我的验光记录
 // @Security  ApiKeyAuth
 // @accept    application/json
 // @Produce   application/json
-// @Param     openId  query     string                                             true  "微信openId"
 // @Success   200     {object}  response.Response{data=object}                     "获取成功"
 // @Router    /mini/myOptometryRecords [get]
 func (a *WxMiniApi) GetMyOptometryRecords(c *gin.Context) {
-	openId := c.Query("openId")
-	if openId == "" {
-		response.FailWithMessage("openId不能为空", c)
+	openId, exists := c.Get("openId")
+	if !exists {
+		response.FailWithMessage("未获取到用户信息", c)
 		return
 	}
-	records, err := wxMiniService.GetMyOptometryRecords(openId)
+	records, err := wxMiniService.GetMyOptometryRecords(openId.(string))
 	if err != nil {
 		global.GVA_LOG.Error("获取验光记录失败", zap.Error(err))
 		response.FailWithMessage(err.Error(), c)
@@ -59,25 +76,31 @@ func (a *WxMiniApi) GetMyOptometryRecords(c *gin.Context) {
 	response.OkWithDetailed(gin.H{"list": records, "total": len(records)}, "获取成功", c)
 }
 
-// BindPhone 绑定手机号
+// BindPhone 绑定手机号（从JWT中获取openId）
 // @Tags      WxMini
 // @Summary   小程序绑定手机号
 // @Security  ApiKeyAuth
 // @accept    application/json
 // @Produce   application/json
-// @Param     data  body      object{openId=string,phone=string}  true  "openId与手机号"
+// @Param     data  body      object{phone=string}  true  "手机号"
 // @Success   200   {object}  response.Response{msg=string}       "绑定成功"
 // @Router    /mini/bindPhone [post]
 func (a *WxMiniApi) BindPhone(c *gin.Context) {
 	var req struct {
-		OpenId string `json:"openId" binding:"required"`
-		Phone  string `json:"phone"  binding:"required"`
+		Phone string `json:"phone" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.FailWithMessage("参数错误: "+err.Error(), c)
 		return
 	}
-	if err := wxMiniService.BindPhone(req.OpenId, req.Phone); err != nil {
+
+	openId, exists := c.Get("openId")
+	if !exists {
+		response.FailWithMessage("未获取到用户信息", c)
+		return
+	}
+
+	if err := wxMiniService.BindPhone(openId.(string), req.Phone); err != nil {
 		global.GVA_LOG.Error("绑定手机号失败", zap.Error(err))
 		response.FailWithMessage(err.Error(), c)
 		return

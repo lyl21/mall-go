@@ -86,3 +86,9 @@ func (s *StoreService) DeleteMxStoreByIds(ids []int64) (err error) {
 	}
 	return
 }
+
+// GetMxStoreByBrandId 根据品牌编号（门禁ID）查询门店
+func (s *StoreService) GetMxStoreByBrandId(brandId string) (store storeModel.MxStore, err error) {
+	err = global.GVA_DB.Where("brand_id = ? AND is_delete = ?", brandId, 0).First(&store).Error
+	return
+}

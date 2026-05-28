@@ -252,9 +252,18 @@ wechat:
     mch-id: ""
     api-key: ""
     notify-url: ""
+    mch-cert-serial-no: ""
+    mch-private-key-path: ""
+    mch-apiv3-key: ""
 wechat-mini-program:
     app-id: ""
     app-secret: ""
+door-lock:
+    base-url: "https://yun.andudu.net/dist"
+    username: ""
+    password: ""
+    yard-sn: ""
+    gyscode: "hyzh"
 zap:
     level: info
     prefix: '[github.com/flipped-aurora/gin-vue-admin/server]'

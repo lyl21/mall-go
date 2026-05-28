@@ -46,18 +46,33 @@ type Server struct {
 
 	// Agora音视频配置
 	Agora AgoraConfig `mapstructure:"agora" json:"agora" yaml:"agora"`
+
+	// 第三方门锁平台配置
+	DoorLock DoorLockConfig `mapstructure:"door-lock" json:"doorLock" yaml:"door-lock"`
 }
 
-// WechatPayConfig 微信支付配置
+// WechatPayConfig 微信支付配置（V2/V3 通用）
 type WechatPayConfig struct {
-	MiniAppID string `mapstructure:"mini-app-id" json:"miniAppId" yaml:"mini-app-id"`
-	MchID     string `mapstructure:"mch-id" json:"mchId" yaml:"mch-id"`
-	APIKey    string `mapstructure:"api-key" json:"apiKey" yaml:"api-key"`
-	NotifyURL string `mapstructure:"notify-url" json:"notifyUrl" yaml:"notify-url"`
+	MiniAppID                  string `mapstructure:"mini-app-id" json:"miniAppId" yaml:"mini-app-id"`
+	MchID                      string `mapstructure:"mch-id" json:"mchId" yaml:"mch-id"`
+	APIKey                     string `mapstructure:"api-key" json:"apiKey" yaml:"api-key"` // V2 API密钥（MD5签名，保留兼容）
+	NotifyURL                  string `mapstructure:"notify-url" json:"notifyUrl" yaml:"notify-url"`
+	MchCertificateSerialNumber string `mapstructure:"mch-cert-serial-no" json:"mchCertSerialNo" yaml:"mch-cert-serial-no"`       // V3 商户证书序列号
+	MchPrivateKeyPath          string `mapstructure:"mch-private-key-path" json:"mchPrivateKeyPath" yaml:"mch-private-key-path"` // V3 商户API私钥路径
+	MchAPIv3Key                string `mapstructure:"mch-apiv3-key" json:"mchApiv3Key" yaml:"mch-apiv3-key"`                     // V3 APIv3密钥
 }
 
 // AgoraConfig Agora音视频配置
 type AgoraConfig struct {
 	AppId          string `mapstructure:"app-id" json:"appId" yaml:"app-id"`
 	AppCertificate string `mapstructure:"app-certificate" json:"appCertificate" yaml:"app-certificate"`
+}
+
+// DoorLockConfig 第三方门锁平台配置
+type DoorLockConfig struct {
+	BaseURL  string `mapstructure:"base-url" json:"baseUrl" yaml:"base-url"`
+	Username string `mapstructure:"username" json:"username" yaml:"username"`
+	Password string `mapstructure:"password" json:"password" yaml:"password"`
+	YardSn   string `mapstructure:"yard-sn" json:"yardSn" yaml:"yard-sn"`
+	Gyscode  string `mapstructure:"gyscode" json:"gyscode" yaml:"gyscode"`
 }

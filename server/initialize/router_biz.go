@@ -145,7 +145,9 @@ func initBizRouter(routers ...*gin.RouterGroup) {
 	router.RouterGroupApp.Wechat.InitWxMsgRouter(wechatGroup)
 	router.RouterGroupApp.Wechat.InitWxMenuRouter(wechatGroup)
 	router.RouterGroupApp.Wechat.InitWxAutoReplyRouter(wechatGroup)
-	router.RouterGroupApp.Wechat.InitWxMiniRouter(wechatGroup)
+
+	// 小程序私有路由（JWT 认证，放在 publicGroup + MiniJWTAuth 中间件）
+	router.RouterGroupApp.Wechat.InitWxMiniRouter(publicGroup)
 
 	// 小程序公开路由（无需 JWT）
 	router.RouterGroupApp.Wechat.InitWxMiniPublicRouter(publicGroup)

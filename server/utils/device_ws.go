@@ -214,12 +214,27 @@ func EnsureDeviceRecord(equipment string, app string, deviceName string) {
 // 广播消息给所有后台管理连接
 func (m *DeviceWebSocketManager) broadcastToAdmin(msg *DeviceStatusMessage) {
 	data, _ := json.Marshal(msg)
+
 	m.mu.RLock()
-	defer m.mu.RUnlock()
+	// 先复制连接列表，避免持有锁期间进行阻塞操作
+	conns := make([]*websocket.Conn, 0, len(m.adminConns))
 	for conn := range m.adminConns {
+		conns = append(conns, conn)
+	}
+	m.mu.RUnlock()
+
+	// 在锁外执行实际的消息发送，避免阻塞其他操作
+	for _, conn := range conns {
+		conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
 		if err := conn.WriteMessage(websocket.TextMessage, data); err != nil {
-			global.GVA_LOG.Error("发送消息失败", zap.Error(err))
+			global.GVA_LOG.Error("发送消息给管理端失败", zap.Error(err))
+			// 移除失效的连接
+			m.mu.Lock()
+			delete(m.adminConns, conn)
+			m.mu.Unlock()
+			conn.Close()
 		}
+		conn.SetWriteDeadline(time.Time{})
 	}
 }
 
@@ -376,8 +391,12 @@ func (m *DeviceWebSocketManager) handleDeviceDisconnect(equipment string, reason
 	m.mu.Lock()
 	delete(m.clients, equipment)
 	m.mu.Unlock()
+
+	// 立即更新数据库状态
 	m.updateDeviceStatus(equipment, 0)
 	global.GVA_LOG.Info("设备"+reason, zap.String("equipment", equipment))
+
+	// 广播离线状态给所有后台管理连接
 	m.broadcastToAdmin(&DeviceStatusMessage{
 		Type:           "deviceStatus",
 		Equipment:      equipment,
@@ -394,20 +413,27 @@ func (m *DeviceWebSocketManager) heartbeatChecker() {
 	for range ticker.C {
 		m.mu.Lock()
 		now := time.Now()
+		// 收集超时的设备，避免在持有锁期间执行阻塞操作
+		var offlineDevices []string
 		for equipment, client := range m.clients {
 			if now.Sub(client.LastPing) > 30*time.Second {
 				client.Conn.Close()
 				delete(m.clients, equipment)
-				m.updateDeviceStatus(equipment, 0)
-				global.GVA_LOG.Info("设备心跳超时", zap.String("equipment", equipment))
-				m.broadcastToAdmin(&DeviceStatusMessage{
-					Type:           "deviceStatus",
-					Equipment:      equipment,
-					OnlineStatus:   0,
-					LastOnlineTime: now.Format("2006-01-02 15:04:05"),
-				})
+				offlineDevices = append(offlineDevices, equipment)
 			}
 		}
 		m.mu.Unlock()
+
+		// 在锁外处理离线设备的状态更新和广播
+		for _, equipment := range offlineDevices {
+			m.updateDeviceStatus(equipment, 0)
+			global.GVA_LOG.Info("设备心跳超时", zap.String("equipment", equipment))
+			m.broadcastToAdmin(&DeviceStatusMessage{
+				Type:           "deviceStatus",
+				Equipment:      equipment,
+				OnlineStatus:   0,
+				LastOnlineTime: now.Format("2006-01-02 15:04:05"),
+			})
+		}
 	}
 }

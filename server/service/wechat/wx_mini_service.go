@@ -1,96 +1,138 @@
 package wechat
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
-	"net/http"
+	"sync"
 	"time"
 
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
-	"github.com/google/uuid"
 	optometryModel "github.com/flipped-aurora/gin-vue-admin/server/model/optometry"
 	storeModel "github.com/flipped-aurora/gin-vue-admin/server/model/store"
 	wechatModel "github.com/flipped-aurora/gin-vue-admin/server/model/wechat"
+	"github.com/flipped-aurora/gin-vue-admin/server/utils"
+	"github.com/google/uuid"
+	"github.com/silenceper/wechat/v2"
+	"github.com/silenceper/wechat/v2/miniprogram"
+	miniProgramConfig "github.com/silenceper/wechat/v2/miniprogram/config"
+	"gorm.io/gorm"
 )
 
 type WxMiniService struct{}
 
-var WxMiniServiceApp = new(WxMiniService)
+var (
+	WxMiniServiceApp = new(WxMiniService)
+	miniProgramInst  *miniprogram.MiniProgram
+	miniProgramOnce  sync.Once
+	miniProgramErr   error
+)
 
-// wxCode2SessionResp 微信 jscode2session 响应
-type wxCode2SessionResp struct {
-	OpenID     string `json:"openid"`
-	SessionKey string `json:"session_key"`
-	UnionID    string `json:"unionid"`
-	ErrCode    int    `json:"errcode"`
-	ErrMsg     string `json:"errmsg"`
-}
-
-// MiniLoginResult 小程序登录结果
+// MiniLoginResult 小程序登录结果（不暴露 session_key）
 type MiniLoginResult struct {
-	WxUser    wechatModel.WxUser `json:"wxUser"`
-	IsNewUser bool               `json:"isNewUser"`
+	Token     string       `json:"token"`
+	WxUser    WxUserSafeVO `json:"wxUser"`
+	IsNewUser bool         `json:"isNewUser"`
 }
 
-// MiniLogin 小程序 code 换取 openid，找到或创建 WxUser
+// WxUserSafeVO 前端安全的微信用户信息（不含敏感字段）
+type WxUserSafeVO struct {
+	Id         string    `json:"id"`
+	OpenId     string    `json:"openId"`
+	NickName   *string   `json:"nickName"`
+	Sex        *string   `json:"sex"`
+	Phone      *string   `json:"phone"`
+	City       *string   `json:"city"`
+	Province   *string   `json:"province"`
+	Country    *string   `json:"country"`
+	HeadimgUrl *string   `json:"headimgUrl"`
+	UnionId    *string   `json:"unionId"`
+	AppType    *string   `json:"appType"`
+	CreateTime time.Time `json:"createTime"`
+}
+
+func toSafeWxUser(u wechatModel.WxUser) WxUserSafeVO {
+	return WxUserSafeVO{
+		Id:         u.Id,
+		OpenId:     u.OpenId,
+		NickName:   u.NickName,
+		Sex:        u.Sex,
+		Phone:      u.Phone,
+		City:       u.City,
+		Province:   u.Province,
+		Country:    u.Country,
+		HeadimgUrl: u.HeadimgUrl,
+		UnionId:    u.UnionId,
+		AppType:    u.AppType,
+		CreateTime: u.CreateTime,
+	}
+}
+
+// getMiniProgram 获取微信小程序实例（sync.Once 单例）
+func (s *WxMiniService) getMiniProgram() (*miniprogram.MiniProgram, error) {
+	miniProgramOnce.Do(func() {
+		appID := global.GVA_CONFIG.WechatMiniProgram.AppID
+		appSecret := global.GVA_CONFIG.WechatMiniProgram.AppSecret
+		if appID == "" || appSecret == "" {
+			miniProgramErr = errors.New("微信小程序 AppID/AppSecret 未配置，请在 config.yaml 中设置 wechat-mini-program")
+			return
+		}
+		wc := wechat.NewWechat()
+		cfg := &miniProgramConfig.Config{
+			AppID:     appID,
+			AppSecret: appSecret,
+		}
+		miniProgramInst = wc.GetMiniProgram(cfg)
+	})
+	return miniProgramInst, miniProgramErr
+}
+
+// MiniLogin 小程序登录（按微信官方时序）
+// 1. code 换取 openid + session_key
+// 2. session_key 仅存数据库，不下发到前端（安全要求）
+// 3. 生成 JWT Token 作为自定义登录态返回给前端
 func (s *WxMiniService) MiniLogin(code string) (result MiniLoginResult, err error) {
-	appID := global.GVA_CONFIG.WechatMiniProgram.AppID
-	appSecret := global.GVA_CONFIG.WechatMiniProgram.AppSecret
-	if appID == "" || appSecret == "" {
-		err = errors.New("微信小程序 AppID/AppSecret 未配置，请在 config.yaml 中设置 wechat-mini-program")
-		return
-	}
-
-	// 调用微信接口换取 openid
-	url := fmt.Sprintf(
-		"https://api.weixin.qq.com/sns/jscode2session?appid=%s&secret=%s&js_code=%s&grant_type=authorization_code",
-		appID, appSecret, code,
-	)
-	resp, err := http.Get(url)
+	mp, err := s.getMiniProgram()
 	if err != nil {
-		err = fmt.Errorf("请求微信服务器失败: %w", err)
 		return
 	}
-	defer resp.Body.Close()
 
-	body, err := io.ReadAll(resp.Body)
+	auth := mp.GetAuth()
+	session, err := auth.Code2Session(code)
 	if err != nil {
-		err = fmt.Errorf("读取微信响应失败: %w", err)
+		err = fmt.Errorf("微信 code2session 失败: %w", err)
 		return
 	}
-
-	var wxResp wxCode2SessionResp
-	if err = json.Unmarshal(body, &wxResp); err != nil {
-		err = fmt.Errorf("解析微信响应失败: %w", err)
-		return
-	}
-	if wxResp.ErrCode != 0 {
-		err = fmt.Errorf("微信接口错误 errcode=%d: %s", wxResp.ErrCode, wxResp.ErrMsg)
+	if session.ErrCode != 0 {
+		err = fmt.Errorf("微信接口错误 errcode=%d: %s", session.ErrCode, session.ErrMsg)
 		return
 	}
 
 	// 查找或创建 WxUser
 	var user wechatModel.WxUser
-	dbErr := global.GVA_DB.Where("open_id = ? AND del_flag = '0'", wxResp.OpenID).First(&user).Error
-	if dbErr != nil {
+	dbErr := global.GVA_DB.Where("open_id = ? AND del_flag = '0'", session.OpenID).First(&user).Error
+	if dbErr != nil && !errors.Is(dbErr, gorm.ErrRecordNotFound) {
+		// DB 连接等非预期错误，直接返回
+		err = fmt.Errorf("查询微信用户失败: %w", dbErr)
+		return
+	}
+
+	if errors.Is(dbErr, gorm.ErrRecordNotFound) {
 		// 新用户
 		now := time.Now()
-		appType := "1" // 小程序
+		appType := "1"
 		subscribe := "0"
 		user = wechatModel.WxUser{
-			Id:          newUserID(),
-			OpenId:      wxResp.OpenID,
-			AppType:     &appType,
-			Subscribe:   &subscribe,
+			Id:            newUserID(),
+			OpenId:        session.OpenID,
+			AppType:       &appType,
+			Subscribe:     &subscribe,
 			SubscribeTime: &now,
 		}
-		if wxResp.UnionID != "" {
-			user.UnionId = &wxResp.UnionID
+		if session.UnionID != "" {
+			user.UnionId = &session.UnionID
 		}
-		if wxResp.SessionKey != "" {
-			user.SessionKey = &wxResp.SessionKey
+		if session.SessionKey != "" {
+			user.SessionKey = &session.SessionKey
 		}
 		if err = global.GVA_DB.Create(&user).Error; err != nil {
 			err = fmt.Errorf("创建微信用户失败: %w", err)
@@ -98,13 +140,21 @@ func (s *WxMiniService) MiniLogin(code string) (result MiniLoginResult, err erro
 		}
 		result.IsNewUser = true
 	} else {
-		// 老用户，更新 session_key
-		if wxResp.SessionKey != "" {
-			global.GVA_DB.Model(&user).Update("session_key", wxResp.SessionKey)
-			user.SessionKey = &wxResp.SessionKey
+		// 老用户，更新 session_key（仅存数据库）
+		if session.SessionKey != "" {
+			global.GVA_DB.Model(&user).Update("session_key", session.SessionKey)
 		}
 	}
-	result.WxUser = user
+
+	// 生成自定义登录态 JWT Token（含 openId + wxUserId）
+	token, err := utils.GenerateMiniToken(session.OpenID, user.Id)
+	if err != nil {
+		err = fmt.Errorf("生成登录Token失败: %w", err)
+		return
+	}
+
+	result.Token = token
+	result.WxUser = toSafeWxUser(user)
 	return
 }
 

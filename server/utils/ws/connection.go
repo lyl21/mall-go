@@ -516,3 +516,31 @@ func (cm *ConnectionManager) GetConnectionCount() int {
 	defer cm.mu.RUnlock()
 	return len(cm.connections)
 }
+
+// GetConnectionIDsByUserID 根据用户ID获取所有连接的 connectionId 列表
+func (cm *ConnectionManager) GetConnectionIDsByUserID(userID int64) []string {
+	cm.mu.RLock()
+	defer cm.mu.RUnlock()
+
+	var ids []string
+	for _, conn := range cm.connections {
+		if conn.UserID != nil && *conn.UserID == userID && conn.IsConnected {
+			ids = append(ids, conn.ConnectionID)
+		}
+	}
+	return ids
+}
+
+// ForEachConnectionByStoreId 遍历指定门店的所有在线连接并执行回调
+func (cm *ConnectionManager) ForEachConnectionByStoreId(storeId string, fn func(connID string, userID int64) error) {
+	cm.mu.RLock()
+	defer cm.mu.RUnlock()
+
+	for connID, conn := range cm.connections {
+		if conn.StoreId == storeId && conn.IsConnected && conn.UserID != nil {
+			if err := fn(connID, *conn.UserID); err != nil {
+				break
+			}
+		}
+	}
+}

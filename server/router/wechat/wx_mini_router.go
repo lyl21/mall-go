@@ -1,6 +1,7 @@
 package wechat
 
 import (
+	"github.com/flipped-aurora/gin-vue-admin/server/middleware"
 	"github.com/gin-gonic/gin"
 )
 
@@ -30,16 +31,18 @@ func (r *WxMiniRouter) InitWxMiniPublicRouter(publicGroup *gin.RouterGroup) {
 	}
 }
 
-// InitWxMiniRouter 注册小程序私有路由（需要 JWT 认证）
-func (r *WxMiniRouter) InitWxMiniRouter(privateGroup *gin.RouterGroup) {
-	miniGroup := privateGroup.Group("mini")
+// InitWxMiniRouter 注册小程序私有路由（需要小程序 JWT 认证）
+func (r *WxMiniRouter) InitWxMiniRouter(publicGroup *gin.RouterGroup) {
+	// 小程序鉴权中间件
+	miniGroup := publicGroup.Group("mini").Use(middleware.MiniJWTAuth())
 	{
 		miniGroup.GET("myOptometryRecords", wxMiniApi.GetMyOptometryRecords)
 		miniGroup.POST("bindPhone", wxMiniApi.BindPhone)
+		miniGroup.POST("logout", wxMiniApi.MiniLogout)
 	}
 
-	// 小程序商城私有API
-	maGroup := privateGroup.Group("weixin/api/ma")
+	// 小程序商城私有API（需 JWT）
+	maGroup := publicGroup.Group("weixin/api/ma").Use(middleware.MiniJWTAuth())
 	{
 		// 购物车
 		maGroup.GET("shoppingcart/page", miniCartApi.GetCartPage)

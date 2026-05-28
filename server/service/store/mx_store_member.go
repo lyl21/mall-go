@@ -115,3 +115,16 @@ func (s *StoreMemberService) IsManagerOrAssistant(storeId int64, userId int64) (
 	}
 	return count > 0, nil
 }
+
+// GetMemberUserIdsByStoreId 获取门店所有成员（店长+验光师）的 userId 列表
+func (s *StoreMemberService) GetMemberUserIdsByStoreId(storeId int64) ([]int64, error) {
+	var userIds []int64
+	err := global.GVA_DB.Model(&storeModel.MxStoreMember{}).
+		Where("store_id = ? AND post IN (1, 2) AND is_delete = ?", storeId, 0).
+		Pluck("user_id", &userIds).Error
+	if err != nil {
+		global.GVA_LOG.Error("查询门店成员ID列表失败!", zap.Error(err))
+		return nil, err
+	}
+	return userIds, nil
+}

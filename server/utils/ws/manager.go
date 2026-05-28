@@ -1,6 +1,7 @@
 package ws
 
 import (
+	"encoding/json"
 	"net/http"
 	"strconv"
 	"sync"
@@ -177,8 +178,66 @@ func (m *Manager) IsUserOnline(userID int64) bool {
 
 // SendToUser 发送消息给指定用户
 func (m *Manager) SendToUser(userID int64, data interface{}) bool {
-	// TODO: 实现根据userID查找连接并发送消息
-	return false
+	connIDs := m.connectionManager.GetConnectionIDsByUserID(userID)
+	if len(connIDs) == 0 {
+		return false
+	}
+
+	msgBytes, err := json.Marshal(data)
+	if err != nil {
+		global.GVA_LOG.Error("序列化消息失败", zap.Error(err))
+		return false
+	}
+
+	success := false
+	for _, connID := range connIDs {
+		if m.connectionManager.SendToConnection(connID, msgBytes) {
+			success = true
+		}
+	}
+	return success
+}
+
+// SendOpenDoorNotify 通知门店成员有用户扫码开门
+// 通过 ForEachConnectionByStoreId 遍历该门店所有在线连接并发送通知
+func (m *Manager) SendOpenDoorNotify(storeId int64, userInfo map[string]interface{}) {
+	if m == nil || m.connectionManager == nil {
+		global.GVA_LOG.Warn("WebSocket 管理器未初始化，无法发送开门通知")
+		return
+	}
+
+	message := map[string]interface{}{
+		"cmd":  "open_door_user_info",
+		"data": userInfo,
+		"resp": "1",
+	}
+
+	msgBytes, err := json.Marshal(message)
+	if err != nil {
+		global.GVA_LOG.Error("序列化开门通知消息失败", zap.Error(err))
+		return
+	}
+
+	storeIdStr := strconv.FormatInt(storeId, 10)
+	sentCount := 0
+
+	m.connectionManager.ForEachConnectionByStoreId(storeIdStr, func(connID string, userID int64) error {
+		if ok := m.connectionManager.SendToConnection(connID, msgBytes); !ok {
+			global.GVA_LOG.Warn("发送开门通知失败",
+				zap.String("connectionId", connID))
+		} else {
+			sentCount++
+			global.GVA_LOG.Info("已发送开门通知给门店成员",
+				zap.String("connectionId", connID),
+				zap.Int64("userId", userID),
+				zap.String("storeId", storeIdStr))
+		}
+		return nil
+	})
+
+	if sentCount == 0 {
+		global.GVA_LOG.Info("没有在线门店成员接收开门通知", zap.Int64("storeId", storeId))
+	}
 }
 
 // GetOnlineCount 获取在线连接数

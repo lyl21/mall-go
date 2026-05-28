@@ -13,19 +13,18 @@ import (
 // MiniAddressApi 小程序地址管理API
 type MiniAddressApi struct{}
 
-// GetAddressPage 获取地址列表
+// GetAddressPage 获取地址列表（从JWT获取用户身份）
 // @Tags      MiniAddress
 // @Summary   小程序获取地址列表
 // @Produce   application/json
-// @Param     userId    query     string  true   "用户ID"
 // @Param     page      query     int     false  "页码"
 // @Param     pageSize  query     int     false  "每页数量"
 // @Success   200  {object}  response.Response{data=[]mall.UserAddress}  "获取成功"
 // @Router    /weixin/api/ma/useraddress/page [get]
 func (a *MiniAddressApi) GetAddressPage(c *gin.Context) {
-	userId := c.Query("userId")
+	userId := getWxUserIdFromContext(c)
 	if userId == "" {
-		response.FailWithMessage("用户ID不能为空", c)
+		response.FailWithMessage("请先登录", c)
 		return
 	}
 	page := utils.GetIntQuery(c, "page", 1)
@@ -62,10 +61,12 @@ func (a *MiniAddressApi) AddAddress(c *gin.Context) {
 		return
 	}
 
-	if addr.UserId == "" {
-		response.FailWithMessage("用户ID不能为空", c)
+	userId := getWxUserIdFromContext(c)
+	if userId == "" {
+		response.FailWithMessage("请先登录", c)
 		return
 	}
+	addr.UserId = userId // JWT 强制覆盖
 
 	// 如果设置为默认地址，取消其他默认地址
 	if addr.IsDefault == "1" {

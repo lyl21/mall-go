@@ -72,11 +72,12 @@ func (a *MiniRemoteApi) GetRemoteOptometryToken(c *gin.Context) {
 // @Success   200     {object}  response.Response{data=map[string]interface{}}  "获取成功"
 // @Router    /weixin/api/ma/remote/ws-url [get]
 func (a *MiniRemoteApi) GetRemoteOptometryWsUrl(c *gin.Context) {
-	userId := c.Query("userId")
-	if userId == "" {
-		response.FailWithMessage("用户ID不能为空", c)
+	val, exists := c.Get("wxUserId")
+	if !exists {
+		response.FailWithMessage("请先登录", c)
 		return
 	}
+	userId := val.(string)
 
 	// 构建WebSocket URL
 	wsUrl := "/ws/remote-optometry/" + userId
@@ -97,8 +98,8 @@ func (a *MiniRemoteApi) GetRemoteOptometryWsUrl(c *gin.Context) {
 func (a *MiniRemoteApi) GetRemoteOptometrySessionInfo(c *gin.Context) {
 	// 返回远程验光服务信息
 	response.OkWithData(gin.H{
-		"service":      "remote-optometry",
-		"version":      "1.0.0",
+		"service": "remote-optometry",
+		"version": "1.0.0",
 		"supportedCmds": []string{
 			"create_session",
 			"join_session",
@@ -195,7 +196,13 @@ func (a *MiniRemoteApi) RemoteDoorOpen(c *gin.Context) {
 		zap.String("deviceId", req.DeviceID),
 		zap.Int("duration", req.Duration))
 
-	// 这里可以实现具体的远程开门逻辑
+	if wsmanager.WSManager != nil {
+		wsmanager.WSManager.SendToUser(0, map[string]interface{}{
+			"cmd":      "door_open",
+			"deviceId": req.DeviceID,
+			"duration": req.Duration,
+		})
+	}
 
 	response.OkWithMessage("开门命令已发送", c)
 }

@@ -27,13 +27,13 @@ type OptometryDataClientVo struct {
 }
 
 type OptometryDTO struct {
-	OptometryRecords  *optometryModel.OptometryRecord   `json:"optometryRecords"`
-	OptometryDataList []optometryModel.OptometryData    `json:"optometryDataList"`
+	OptometryRecords  *optometryModel.OptometryRecord `json:"optometryRecords"`
+	OptometryDataList []optometryModel.OptometryData  `json:"optometryDataList"`
 }
 
 type VisionTestResultsTryOptomentryVo struct {
-	TryOptometryList  []optometryModel.TryOptometry     `json:"tryOptometryList"`
-	VisionTestResults *optometryModel.VisionTestResult  `json:"visionTestResults"`
+	TryOptometryList  []optometryModel.TryOptometry    `json:"tryOptometryList"`
+	VisionTestResults *optometryModel.VisionTestResult `json:"visionTestResults"`
 }
 
 func (s *OptometryRecordService) CreateOptometryRecord(record optometryModel.OptometryRecord) (err error) {
@@ -59,11 +59,11 @@ func (s *OptometryRecordService) GetOptometryRecord(id int64) (record optometryM
 func (s *OptometryRecordService) GetOptometryRecordList(pageInfo request.PageInfo, search optometryModel.OptometryRecord) (list []optometryModel.OptometryRecord, total int64, err error) {
 	limit := pageInfo.PageSize
 	offset := pageInfo.PageSize * (pageInfo.Page - 1)
-	
+
 	if limit == 0 {
 		limit = 10000
 	}
-	
+
 	db := global.GVA_DB.Model(&optometryModel.OptometryRecord{}).Where("is_delete = ?", 0)
 
 	if search.CustomerName != "" {
@@ -225,16 +225,19 @@ func (s *OptometryRecordService) GetVisionTestResultsTryOptomentryVoByOptometryR
 }
 
 type OptometryRecordDTO struct {
-	OptometryRecords  *optometryModel.OptometryRecord   `json:"optometryRecords"`
-	OptometryDataList []optometryModel.OptometryData    `json:"optometryDataList"`
-	VisionTestResults *optometryModel.VisionTestResult  `json:"visionTestResults"`
-	TryOptometryList  []optometryModel.TryOptometry     `json:"tryOptometryList"`
+	OptometryRecords  *optometryModel.OptometryRecord  `json:"optometryRecords"`
+	OptometryDataList []optometryModel.OptometryData   `json:"optometryDataList"`
+	VisionTestResults *optometryModel.VisionTestResult `json:"visionTestResults"`
+	TryOptometryList  []optometryModel.TryOptometry    `json:"tryOptometryList"`
 }
 
 func (s *OptometryRecordService) InsertOptometryRecordDTO(dto OptometryRecordDTO) (err error) {
 	tx := global.GVA_DB.Begin()
+	committed := false
 	defer func() {
 		if r := recover(); r != nil {
+			tx.Rollback()
+		} else if !committed {
 			tx.Rollback()
 		}
 	}()
@@ -305,6 +308,7 @@ func (s *OptometryRecordService) InsertOptometryRecordDTO(dto OptometryRecordDTO
 		global.GVA_LOG.Error("提交事务失败", zap.Error(err))
 		return
 	}
+	committed = true
 
 	return nil
 }

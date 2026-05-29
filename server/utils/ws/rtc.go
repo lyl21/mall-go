@@ -36,8 +36,12 @@ func (g *RtcTokenGenerator) GenerateRtcToken(channelName string, uid int) *RtcCo
 	return g.generateRealToken(channelName, uid)
 }
 
-// generateMockToken 生成模拟Token
+// generateMockToken 生成模拟Token（仅开发环境使用）
 func (g *RtcTokenGenerator) generateMockToken(channelName string, uid int) *RtcConfig {
+	global.GVA_LOG.Warn("⚠️ 使用模拟RTC Token，仅限开发环境！生产环境请配置声网证书",
+		zap.String("channelName", channelName),
+		zap.Int("uid", uid))
+
 	expireTimestamp := uint32(time.Now().Unix()) + g.tokenExpireSeconds
 	token := fmt.Sprintf("mock_token_%s_%d_%d", channelName, uid, expireTimestamp)
 

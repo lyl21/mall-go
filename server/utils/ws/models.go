@@ -283,6 +283,24 @@ func ParseSocketMessage(data []byte) (*SocketMessage, error) {
 // CreateErrorMessage 创建错误响应消息
 func CreateErrorMessage(sessionID *string, txnID *string, role *ClientRole, errMsg string) *SocketMessage {
 	errData := ErrorData{
+		Code:    400,
+		Message: errMsg,
+	}
+	data, _ := json.Marshal(errData)
+	rawData := json.RawMessage(data)
+
+	return &SocketMessage{
+		Cmd:       CmdError,
+		SessionID: sessionID,
+		TxnID:     txnID,
+		Role:      role,
+		Data:      &rawData,
+	}
+}
+
+// CreateInternalErrorMessage 创建内部错误响应消息
+func CreateInternalErrorMessage(sessionID *string, txnID *string, role *ClientRole, errMsg string) *SocketMessage {
+	errData := ErrorData{
 		Code:    500,
 		Message: errMsg,
 	}

@@ -410,6 +410,20 @@ func (a *MiniPayApi) Refund(c *gin.Context) {
 		return
 	}
 
+	// 校验退款金额
+	refundFee := req.RefundFee
+	if refundFee == 0 {
+		refundFee = order.PaymentPrice
+	}
+	if refundFee < 0 {
+		response.FailWithMessage("退款金额不能为负数", c)
+		return
+	}
+	if refundFee > order.PaymentPrice {
+		response.FailWithMessage("退款金额不能超过支付金额", c)
+		return
+	}
+
 	// V3 退款或 V2 降级
 	var wxSuccess bool
 	if wxPay.IsV3Configured() {
@@ -422,9 +436,9 @@ func (a *MiniPayApi) Refund(c *gin.Context) {
 		return
 	}
 
-	// 退款是异步操作，标记订单为退款中状态（而非直接关闭）
-	// 退款回调确认后再更新为已关闭
-	refundStatus := "6"
+	// 退款是异步操作，标记订单为退款中状态
+	// 注意：退款状态 "6" 不在 OrderStatus 常量中，使用已关闭状态
+	refundStatus := "5"
 	global.GVA_DB.Model(&mall.OrderInfo{}).Where("id = ?", order.Id).
 		Updates(map[string]interface{}{
 			"status": &refundStatus,

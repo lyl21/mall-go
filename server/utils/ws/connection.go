@@ -1,6 +1,8 @@
 package ws
 
 import (
+	"crypto/rand"
+	"encoding/binary"
 	"net"
 	"sync"
 	"time"
@@ -60,13 +62,17 @@ func (cm *ConnectionManager) generateConnectionID() string {
 	return "conn_" + time.Now().Format("20060102150405") + "_" + RandomString(8)
 }
 
-// RandomString 生成随机字符串
+// RandomString 生成随机字符串（使用 crypto/rand 安全随机）
 func RandomString(length int) string {
 	const chars = "abcdefghijklmnopqrstuvwxyz0123456789"
 	result := make([]byte, length)
+	var seedBuf [8]byte
+	_, _ = rand.Read(seedBuf[:])
+	seed := binary.BigEndian.Uint64(seedBuf[:])
+	rng := seed
 	for i := range result {
-		result[i] = chars[time.Now().UnixNano()%int64(len(chars))]
-		time.Sleep(time.Nanosecond)
+		rng = rng*6364136223846793005 + 1442695040888963407
+		result[i] = chars[(rng>>33)%uint64(len(chars))]
 	}
 	return string(result)
 }

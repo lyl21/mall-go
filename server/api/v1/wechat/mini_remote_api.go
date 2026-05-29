@@ -77,7 +77,11 @@ func (a *MiniRemoteApi) GetRemoteOptometryWsUrl(c *gin.Context) {
 		response.FailWithMessage("请先登录", c)
 		return
 	}
-	userId := val.(string)
+	userId, ok := val.(string)
+	if !ok || userId == "" {
+		response.FailWithMessage("用户信息异常", c)
+		return
+	}
 
 	// 构建WebSocket URL
 	wsUrl := "/ws/remote-optometry/" + userId
@@ -141,9 +145,31 @@ func (a *MiniRemoteApi) RemoteControl(c *gin.Context) {
 		return
 	}
 
+	// 校验用户身份
+	wxUserId := getWxUserIdFromContext(c)
+	if wxUserId == "" {
+		response.FailWithMessage("请先登录", c)
+		return
+	}
+
+	// 校验命令白名单
+	allowedCommands := map[string]bool{
+		"focus_near":   true,
+		"focus_far":    true,
+		"switch_left":  true,
+		"switch_right": true,
+		"pause":        true,
+		"resume":       true,
+	}
+	if !allowedCommands[req.Command] {
+		response.FailWithMessage("不支持的控制命令", c)
+		return
+	}
+
 	global.GVA_LOG.Info("远程控制设备",
 		zap.String("deviceId", req.DeviceID),
-		zap.String("command", req.Command))
+		zap.String("command", req.Command),
+		zap.String("wxUserId", wxUserId))
 
 	// 这里可以实现具体的远程控制逻辑
 	// 例如通过WebSocket发送控制命令给设备
@@ -188,13 +214,25 @@ func (a *MiniRemoteApi) RemoteDoorOpen(c *gin.Context) {
 		return
 	}
 
+	// 校验用户身份
+	wxUserId := getWxUserIdFromContext(c)
+	if wxUserId == "" {
+		response.FailWithMessage("请先登录", c)
+		return
+	}
+
 	if req.Duration <= 0 {
 		req.Duration = 5 // 默认5秒
+	}
+	// 限制开门持续时间，防止异常值
+	if req.Duration > 30 {
+		req.Duration = 30
 	}
 
 	global.GVA_LOG.Info("远程开门",
 		zap.String("deviceId", req.DeviceID),
-		zap.Int("duration", req.Duration))
+		zap.Int("duration", req.Duration),
+		zap.String("wxUserId", wxUserId))
 
 	if wsmanager.WSManager != nil {
 		wsmanager.WSManager.SendToUser(0, map[string]interface{}{

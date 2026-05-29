@@ -68,7 +68,9 @@ func ParseClientToken(tokenString string) (*ClientClaims, error) {
 
 func ClearClientToken(tokenString string) error {
 	ctx := context.Background()
-	global.GVA_REDIS.Del(ctx, "client:token:"+tokenString)
+	if err := global.GVA_REDIS.Del(ctx, "client:token:"+tokenString).Err(); err != nil {
+		return err
+	}
 	return nil
 }
 

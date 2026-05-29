@@ -68,6 +68,20 @@ func (a *MiniAddressApi) AddAddress(c *gin.Context) {
 	}
 	addr.UserId = userId // JWT 强制覆盖
 
+	// 校验必填字段
+	if addr.UserName == "" {
+		response.FailWithMessage("收货人姓名不能为空", c)
+		return
+	}
+	if addr.TelNum == "" {
+		response.FailWithMessage("手机号不能为空", c)
+		return
+	}
+	if addr.DetailInfo == "" {
+		response.FailWithMessage("详细地址不能为空", c)
+		return
+	}
+
 	// 如果设置为默认地址，取消其他默认地址
 	if addr.IsDefault == "1" {
 		global.GVA_DB.Model(&mall.UserAddress{}).Where("user_id = ?", addr.UserId).Update("is_default", "0")
@@ -105,12 +119,23 @@ func (a *MiniAddressApi) UpdateAddress(c *gin.Context) {
 		return
 	}
 
+	// 校验用户身份，防止越权修改
+	userId := getWxUserIdFromContext(c)
+	if userId == "" {
+		response.FailWithMessage("请先登录", c)
+		return
+	}
+
+	// 验证地址属于当前用户
+	var existing mall.UserAddress
+	if err := global.GVA_DB.Where("id = ? AND user_id = ? AND del_flag = ?", addr.Id, userId, "0").First(&existing).Error; err != nil {
+		response.FailWithMessage("地址不存在或无权修改", c)
+		return
+	}
+
 	// 如果设置为默认地址，取消其他默认地址
 	if addr.IsDefault == "1" {
-		var existing mall.UserAddress
-		if err := global.GVA_DB.Where("id = ?", addr.Id).First(&existing).Error; err == nil {
-			global.GVA_DB.Model(&mall.UserAddress{}).Where("user_id = ? AND id != ?", existing.UserId, addr.Id).Update("is_default", "0")
-		}
+		global.GVA_DB.Model(&mall.UserAddress{}).Where("user_id = ? AND id != ?", userId, addr.Id).Update("is_default", "0")
 	}
 
 	updateData := map[string]interface{}{
@@ -124,7 +149,8 @@ func (a *MiniAddressApi) UpdateAddress(c *gin.Context) {
 		"is_default":    addr.IsDefault,
 	}
 
-	if err := global.GVA_DB.Model(&mall.UserAddress{}).Where("id = ?", addr.Id).Updates(updateData).Error; err != nil {
+	// 更新时增加 user_id 条件，防止越权
+	if err := global.GVA_DB.Model(&mall.UserAddress{}).Where("id = ? AND user_id = ?", addr.Id, userId).Updates(updateData).Error; err != nil {
 		global.GVA_LOG.Error("更新地址失败", zap.Error(err))
 		response.FailWithMessage("更新失败", c)
 		return

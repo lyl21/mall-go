@@ -87,7 +87,18 @@ func (s *DoorLockService) OpenDoor(id int64, openId string) (string, error) {
 	result, err := s.doorRemote(doorGuid)
 	if err != nil {
 		global.GVA_LOG.Error("远程开门失败", zap.Error(err))
-		result = fmt.Sprintf("error: %v", err)
+		// 开门失败时仍然记录历史，但返回错误
+		errResult := fmt.Sprintf("error: %v", err)
+		history := mallModel.DoorLockHistory{
+			YardSn:     doorLock.YardSn,
+			DoorGuid:   &doorGuid,
+			Operation:  stringPtr("open"),
+			Response:   &errResult,
+			DetailInfo: doorLock.DetailInfo,
+			OpenId:     &openId,
+		}
+		global.GVA_DB.Create(&history)
+		return "", fmt.Errorf("远程开门失败: %v", err)
 	}
 
 	// 4. 记录操作历史

@@ -313,9 +313,13 @@ func (a *MiniPayApi) payNotifyV2(c *gin.Context) {
 	c.XML(200, wechat.NotifyResponse{ReturnCode: gopay.SUCCESS, ReturnMsg: "OK"})
 }
 
-// notifyOrder 订单支付成功处理
+// notifyOrder 订单支付成功处理（SQL乐观锁防并发重复处理）
 func (a *MiniPayApi) notifyOrder(order *mall.OrderInfo) {
-	if order.IsPay != "0" {
+	// 先尝试原子更新 is_pay，如果有并发回调，只有一个能更新成功
+	result := global.GVA_DB.Model(&mall.OrderInfo{}).
+		Where("id = ? AND is_pay = ?", order.Id, "0").
+		Update("is_pay", "1")
+	if result.Error != nil || result.RowsAffected == 0 {
 		return
 	}
 

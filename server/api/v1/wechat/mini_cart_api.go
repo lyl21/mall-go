@@ -163,10 +163,16 @@ func (a *MiniCartApi) UpdateCart(c *gin.Context) {
 		return
 	}
 
+	userId := getWxUserIdFromContext(c)
+	if userId == "" {
+		response.FailWithMessage("请先登录", c)
+		return
+	}
+
 	updateData := map[string]interface{}{
 		"quantity": cart.Quantity,
 	}
-	if err := global.GVA_DB.Model(&mall.ShoppingCart{}).Where("id = ?", cart.Id).Updates(updateData).Error; err != nil {
+	if err := global.GVA_DB.Model(&mall.ShoppingCart{}).Where("id = ? AND user_id = ?", cart.Id, userId).Updates(updateData).Error; err != nil {
 		global.GVA_LOG.Error("更新购物车失败", zap.Error(err))
 		response.FailWithMessage("更新失败", c)
 		return
@@ -192,7 +198,13 @@ func (a *MiniCartApi) DeleteCart(c *gin.Context) {
 		return
 	}
 
-	if err := global.GVA_DB.Model(&mall.ShoppingCart{}).Where("id = ?", req.Id).Update("del_flag", "1").Error; err != nil {
+	userId := getWxUserIdFromContext(c)
+	if userId == "" {
+		response.FailWithMessage("请先登录", c)
+		return
+	}
+
+	if err := global.GVA_DB.Model(&mall.ShoppingCart{}).Where("id = ? AND user_id = ?", req.Id, userId).Update("del_flag", "1").Error; err != nil {
 		global.GVA_LOG.Error("删除购物车失败", zap.Error(err))
 		response.FailWithMessage("删除失败", c)
 		return

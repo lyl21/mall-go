@@ -25,11 +25,11 @@ const (
 
 // 状态流转规则
 var validTransitions = map[string][]string{
-	OrderStatusUnpaid:    {OrderStatusPaid, OrderStatusClosed},     // 待付款 -> 待发货/已关闭
-	OrderStatusPaid:      {OrderStatusShipped, OrderStatusClosed},  // 待发货 -> 待收货/已关闭
+	OrderStatusUnpaid:    {OrderStatusPaid, OrderStatusClosed},      // 待付款 -> 待发货/已关闭
+	OrderStatusPaid:      {OrderStatusShipped, OrderStatusClosed},   // 待发货 -> 待收货/已关闭
 	OrderStatusShipped:   {OrderStatusCompleted, OrderStatusClosed}, // 待收货 -> 已完成/已关闭
-	OrderStatusCompleted: {},                                       // 已完成（终态）
-	OrderStatusClosed:    {},                                       // 已关闭（终态）
+	OrderStatusCompleted: {},                                        // 已完成（终态）
+	OrderStatusClosed:    {},                                        // 已关闭（终态）
 }
 
 type OrderInfoService struct{}
@@ -181,10 +181,29 @@ func (s *OrderInfoService) CancelOrder(id string) error {
 	}
 
 	now := time.Now()
-	return global.GVA_DB.Model(&mallModel.OrderInfo{}).Where("id = ?", id).Updates(map[string]interface{}{
-		"status":       OrderStatusClosed,
-		"closing_time": &now,
-	}).Error
+	return global.GVA_DB.Transaction(func(tx *gorm.DB) error {
+		// 更新订单状态为已关闭
+		if err := tx.Model(&mallModel.OrderInfo{}).Where("id = ?", id).Updates(map[string]interface{}{
+			"status":       OrderStatusClosed,
+			"closing_time": &now,
+		}).Error; err != nil {
+			return err
+		}
+
+		// 恢复库存
+		var orderItems []mallModel.OrderItem
+		if err := tx.Where("order_id = ?", id).Find(&orderItems).Error; err != nil {
+			return err
+		}
+		for _, item := range orderItems {
+			if err := tx.Model(&mallModel.GoodsSpu{}).Where("id = ?", item.SpuId).
+				UpdateColumn("stock", gorm.Expr("stock + ?", item.Quantity)).Error; err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
 }
 
 // RefundOrder 订单退款
@@ -200,11 +219,8 @@ func (s *OrderInfoService) RefundOrder(id string, refundFee float64, refundDesc 
 	}
 
 	// 更新订单状态为已关闭（退款）
-	status := OrderStatusClosed
-	return global.GVA_DB.Model(&order).Updates(map[string]interface{}{
-		"status":    &status,
-		"is_refund": "1",
-	}).Error
+	// 注意：is_refund 字段不在 OrderInfo 模型中，仅更新 status
+	return global.GVA_DB.Model(&order).Update("status", OrderStatusClosed).Error
 }
 
 // ShipOrder 订单发货
@@ -240,8 +256,8 @@ func (s *OrderInfoService) ShipOrder(id string, logistics string, logisticsNo st
 	// 更新订单状态为待收货
 	status := OrderStatusShipped
 	return global.GVA_DB.Model(&order).Updates(map[string]interface{}{
-		"status":       &status,
-		"logistics_id": &logisticsId,
+		"status":        &status,
+		"logistics_id":  &logisticsId,
 		"delivery_time": &now,
 	}).Error
 }

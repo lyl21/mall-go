@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/common/request"
@@ -15,6 +16,7 @@ import (
 	wechatModel "github.com/flipped-aurora/gin-vue-admin/server/model/wechat"
 	storeService "github.com/flipped-aurora/gin-vue-admin/server/service/store"
 	"github.com/flipped-aurora/gin-vue-admin/server/wsmanager"
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
@@ -140,7 +142,7 @@ func (s *DoorLockService) OpenDoor(id int64, openId string) (string, error) {
 		// 新用户：创建 MxUser
 		mxUser = storeModel.MxUser{
 			PhoneNumber: phone,
-			Password:    "123456", // 默认密码
+			Password:    fmt.Sprintf("%x", uuid.New())[:8], // 生成随机8位密码
 			Name:        wxNickName,
 			Wechat:      openId,
 			Openid:      openId,
@@ -225,7 +227,8 @@ func (s *DoorLockService) doorRemote(doorGuid string) (string, error) {
 	}
 	loginJSON, _ := json.Marshal(loginBody)
 
-	resp, err := http.Post(loginURL, "application/json", bytes.NewBuffer(loginJSON))
+	loginClient := &http.Client{Timeout: 10 * time.Second}
+	resp, err := loginClient.Post(loginURL, "application/json", bytes.NewBuffer(loginJSON))
 	if err != nil {
 		return "", err
 	}
@@ -261,7 +264,7 @@ func (s *DoorLockService) doorRemote(doorGuid string) (string, error) {
 	req.Header.Set("token", token)
 	req.Header.Set("Content-Type", "application/json")
 
-	client := &http.Client{}
+	client := &http.Client{Timeout: 10 * time.Second}
 	resp, err = client.Do(req)
 	if err != nil {
 		return "", err

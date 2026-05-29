@@ -15,6 +15,7 @@ import (
 	"github.com/silenceper/wechat/v2"
 	"github.com/silenceper/wechat/v2/miniprogram"
 	miniProgramConfig "github.com/silenceper/wechat/v2/miniprogram/config"
+	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
 
@@ -142,7 +143,9 @@ func (s *WxMiniService) MiniLogin(code string) (result MiniLoginResult, err erro
 	} else {
 		// 老用户，更新 session_key（仅存数据库）
 		if session.SessionKey != "" {
-			global.GVA_DB.Model(&user).Update("session_key", session.SessionKey)
+			if updateErr := global.GVA_DB.Model(&user).Update("session_key", session.SessionKey).Error; updateErr != nil {
+				global.GVA_LOG.Error("更新session_key失败", zap.Error(updateErr))
+			}
 		}
 	}
 

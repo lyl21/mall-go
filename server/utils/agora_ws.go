@@ -17,9 +17,9 @@ var (
 
 // AgoraWebSocketManager 音视频WebSocket管理器
 type AgoraWebSocketManager struct {
-	rooms      map[string]*AgoraRoom // roomId -> room
-	clients    map[string]*AgoraClient // clientId -> client
-	mu         sync.RWMutex
+	rooms   map[string]*AgoraRoom   // roomId -> room
+	clients map[string]*AgoraClient // clientId -> client
+	mu      sync.RWMutex
 }
 
 // AgoraRoom 音视频房间
@@ -33,30 +33,30 @@ type AgoraRoom struct {
 
 // AgoraClient 音视频客户端
 type AgoraClient struct {
-	Conn       *websocket.Conn
-	ClientId   string
-	UserId     string
-	RoomId     string
-	Role       string // host, participant
-	LastPing   time.Time
+	Conn     *websocket.Conn
+	ClientId string
+	UserId   string
+	RoomId   string
+	Role     string // host, participant
+	LastPing time.Time
 }
 
 // AgoraMessage 音视频消息
 type AgoraMessage struct {
-	Type      string                 `json:"type"`
-	RoomId    string                 `json:"roomId"`
-	ClientId  string                 `json:"clientId"`
-	UserId    string                 `json:"userId"`
-	Data      map[string]interface{} `json:"data"`
+	Type     string                 `json:"type"`
+	RoomId   string                 `json:"roomId"`
+	ClientId string                 `json:"clientId"`
+	UserId   string                 `json:"userId"`
+	Data     map[string]interface{} `json:"data"`
 }
 
 // AgoraTokenResponse Agora Token响应
 type AgoraTokenResponse struct {
-	Type      string `json:"type"`
-	Channel   string `json:"channel"`
-	Token     string `json:"token"`
-	Uid       uint32 `json:"uid"`
-	AppId     string `json:"appId"`
+	Type    string `json:"type"`
+	Channel string `json:"channel"`
+	Token   string `json:"token"`
+	Uid     uint32 `json:"uid"`
+	AppId   string `json:"appId"`
 }
 
 // InitAgoraWSManager 初始化音视频WebSocket管理器
@@ -86,11 +86,11 @@ func (m *AgoraWebSocketManager) HandleAgoraWS(w http.ResponseWriter, r *http.Req
 	}
 
 	var joinMsg struct {
-		Type      string `json:"type"`
-		RoomId    string `json:"roomId"`
-		UserId    string `json:"userId"`
-		ClientId  string `json:"clientId"`
-		Role      string `json:"role"`
+		Type     string `json:"type"`
+		RoomId   string `json:"roomId"`
+		UserId   string `json:"userId"`
+		ClientId string `json:"clientId"`
+		Role     string `json:"role"`
 	}
 	if err := json.Unmarshal(message, &joinMsg); err != nil {
 		global.GVA_LOG.Error("解析用户信息失败", zap.Error(err))
@@ -221,9 +221,10 @@ func (m *AgoraWebSocketManager) forwardSignal(from *AgoraClient, msg *AgoraMessa
 		return
 	}
 
-	// 转发给目标客户端或广播给房间其他成员
-	targetId := msg.Data["targetId"].(string)
-	if targetId != "" {
+	// 安全获取 targetId，避免类型断言 panic
+	targetIdRaw, ok := msg.Data["targetId"]
+	targetId, _ := targetIdRaw.(string)
+	if ok && targetId != "" {
 		if targetClient, ok := room.Members[targetId]; ok {
 			msg.Data["fromId"] = from.ClientId
 			data, _ := json.Marshal(msg)
@@ -358,4 +359,41 @@ func (m *AgoraWebSocketManager) GetRoomCount() int {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	return len(m.rooms)
+}
+
+// RemoveClientFromRoom 通过API调用将客户端从房间中移除
+func (m *AgoraWebSocketManager) RemoveClientFromRoom(clientId string, roomId string) {
+	m.mu.Lock()
+	client, exists := m.clients[clientId]
+	if !exists {
+		m.mu.Unlock()
+		return
+	}
+
+	delete(m.clients, clientId)
+
+	room, roomExists := m.rooms[roomId]
+	if roomExists {
+		delete(room.Members, clientId)
+		if len(room.Members) == 0 {
+			delete(m.rooms, roomId)
+		}
+	}
+	m.mu.Unlock()
+
+	if client.Conn != nil {
+		client.Conn.Close()
+	}
+
+	// 通知房间其他成员
+	m.broadcastToRoom(roomId, &AgoraMessage{
+		Type:     "userLeft",
+		RoomId:   roomId,
+		ClientId: clientId,
+		UserId:   client.UserId,
+	}, clientId)
+
+	global.GVA_LOG.Info("API调用-用户离开音视频房间",
+		zap.String("roomId", roomId),
+		zap.String("clientId", clientId))
 }

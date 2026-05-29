@@ -215,7 +215,6 @@ const updateDeviceStatus = (equipment, onlineStatus, lastOnlineTime, ipAddress, 
     tableData.value[index].lastOnlineTime = lastOnlineTime
     if (ipAddress) tableData.value[index].ipAddress = ipAddress
     if (ipLocation) tableData.value[index].ipLocation = ipLocation
-    if (ipLocation) tableData.value[index].deviceLocation = ipLocation
   }
 }
 

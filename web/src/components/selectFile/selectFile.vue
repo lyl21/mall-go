@@ -1,9 +1,10 @@
 <template>
-  <div>
+  <div v-loading="uploading" element-loading-text="正在上传文件..." class="select-file-wrapper">
     <el-upload
       v-model:file-list="fileList"
       multiple
       :action="`${getBaseUrl()}/fileUploadAndDownload/upload?noSave=1`"
+      :before-upload="beforeUpload"
       :on-error="uploadError"
       :on-success="uploadSuccess"
       :on-remove="uploadRemove"
@@ -43,7 +44,7 @@
 
   const token = userStore.token
 
-  const fullscreenLoading = ref(false)
+  const uploading = ref(false)
 
   const model = defineModel({ type: Array })
 
@@ -51,7 +52,14 @@
 
   const emits = defineEmits(['on-success', 'on-error'])
 
+  // 上传前回调：开启 loading 状态
+  const beforeUpload = () => {
+    uploading.value = true
+    return true
+  }
+
   const uploadSuccess = (res) => {
+    uploading.value = false
     const { data, code } = res
     if (code !== 0) {
       ElMessage({
@@ -77,11 +85,11 @@
   }
 
   const uploadError = (err) => {
+    uploading.value = false
     ElMessage({
       type: 'error',
       message: '上传失败'
     })
-    fullscreenLoading.value = false
     emits('on-error', err)
   }
 </script>

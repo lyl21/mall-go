@@ -21,9 +21,9 @@
         <el-table-column align="left" label="版本名称" prop="versionName" min-width="120" />
         <el-table-column align="left" label="文件地址" prop="url" min-width="220" show-overflow-tooltip />
         <el-table-column align="left" label="包名" prop="packageName" min-width="200" />
-        <el-table-column align="left" label="强制更新" prop="forcedUpdating" min-width="100">
+        <el-table-column align="left" label="强制更新" min-width="100">
           <template #default="scope">
-            <el-tag :type="scope.row.forcedUpdating === 1 ? 'danger' : 'info'">{{ scope.row.forcedUpdating === 1 ? '是' : '否' }}</el-tag>
+            <el-tag :type="scope.row.forceUpdate === 1 ? 'danger' : 'info'">{{ scope.row.forceUpdate === 1 ? '是' : '否' }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column align="left" label="更新说明" prop="note" min-width="200" show-overflow-tooltip />
@@ -57,7 +57,7 @@
         </el-form-item>
         <el-form-item label="文件地址"><el-input v-model="form.url" readonly placeholder="上传后自动填充" /></el-form-item>
         <el-form-item label="强制更新">
-          <el-switch v-model="form.forcedUpdating" :active-value="1" :inactive-value="0" />
+          <el-switch v-model="form.forceUpdate" :active-value="1" :inactive-value="0" />
         </el-form-item>
         <el-form-item label="更新说明"><el-input v-model="form.note" type="textarea" :rows="3" /></el-form-item>
       </el-form>
@@ -113,8 +113,7 @@ const handleUploadSuccess = (res) => {
 
 const openDialog = (type, row) => {
   dialogTitle.value = type === 'add' ? '新增安装包' : '编辑安装包'
-  // form.value = type === 'add' ? { forceUpdate: 0 } : { ...row }
-  form.value = type === 'add' ? { forcedUpdating: 0 } : { ...row }
+  form.value = type === 'add' ? { forceUpdate: 0 } : { ...row }
   uploadFiles.value = form.value.url ? [{ name: form.value.packageName || '已上传文件', url: form.value.url }] : []
   dialogVisible.value = true
 }
@@ -130,7 +129,7 @@ const submitForm = async () => {
       url: form.value.url,
       versionName: form.value.versionName,
       note: form.value.note || '',
-      forcedUpdating: form.value.forcedUpdating ?? 0
+      forceUpdate: form.value.forceUpdate ?? 0
     }
     const res = form.value.installingId ? await updatePackage(payload) : await createPackage(payload)
     if (res.code === 0) { ElMessage.success('操作成功'); dialogVisible.value = false; getTableData() }

@@ -1,6 +1,8 @@
 package wechat
 
 import (
+	"crypto/sha256"
+	"encoding/binary"
 	"fmt"
 	"time"
 
@@ -161,14 +163,24 @@ func (a *MiniAgoraApi) LeaveRoom(c *gin.Context) {
 		return
 	}
 
-	// 发送离开消息给WebSocket
-	// 实际离开操作由WebSocket处理
+	// 使用 JWT 中的 wxUserId 校验用户身份
+	wxUserId := getWxUserIdFromContext(c)
+	if wxUserId == "" {
+		response.FailWithMessage("请先登录", c)
+		return
+	}
+
+	// 通过 WebSocket 管理器将用户从房间中移除
+	if utils.AgoraWSManager != nil {
+		utils.AgoraWSManager.RemoveClientFromRoom(req.ClientId, req.RoomId)
+	}
 
 	global.GVA_LOG.Info("用户离开音视频房间",
 		zap.String("roomId", req.RoomId),
-		zap.String("clientId", req.ClientId))
+		zap.String("clientId", req.ClientId),
+		zap.String("wxUserId", wxUserId))
 
-	response.OkWithMessage("已发送离开请求", c)
+	response.OkWithMessage("已离开房间", c)
 }
 
 // GetRoomInfo 获取房间信息
@@ -182,6 +194,13 @@ func (a *MiniAgoraApi) GetRoomInfo(c *gin.Context) {
 	roomId := c.Query("roomId")
 	if roomId == "" {
 		response.FailWithMessage("房间ID不能为空", c)
+		return
+	}
+
+	// 校验用户登录状态
+	wxUserId := getWxUserIdFromContext(c)
+	if wxUserId == "" {
+		response.FailWithMessage("请先登录", c)
 		return
 	}
 
@@ -209,13 +228,11 @@ func (a *MiniAgoraApi) GetRoomList(c *gin.Context) {
 	}, c)
 }
 
-// hashStringToUint32 将字符串哈希为uint32
+// hashStringToUint32 将字符串哈希为uint32（使用SHA256减少碰撞）
 func hashStringToUint32(s string) uint32 {
-	var hash uint32 = 5381
-	for i := 0; i < len(s); i++ {
-		hash = ((hash << 5) + hash) + uint32(s[i])
-	}
-	return hash % 1000000000 // 限制在合理范围内
+	h := sha256.Sum256([]byte(s))
+	// 取前4字节转换为uint32，碰撞概率极低
+	return binary.BigEndian.Uint32(h[:4]) % 1000000000
 }
 
 // generateMockToken 生成模拟Token

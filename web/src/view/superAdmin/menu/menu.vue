@@ -134,7 +134,6 @@
         <el-form
           v-if="dialogFormVisible"
           ref="menuForm"
-          :inline="true"
           :model="form"
           :rules="rules"
           label-position="top"
@@ -188,7 +187,6 @@
       <div class="border-b border-gray-200">
         <h3 class="font-semibold text-gray-700 mb-4">路由配置</h3>
         <el-form
-          :inline="true"
           :model="form"
           :rules="rules"
           label-position="top"
@@ -242,7 +240,6 @@
       <div class="border-b border-gray-200">
         <h3 class="font-semibold text-gray-700 mb-4">显示设置</h3>
         <el-form
-          :inline="true"
           :model="form"
           :rules="rules"
           label-position="top"
@@ -282,7 +279,6 @@
       <div class="border-b border-gray-200">
         <h3 class="font-semibold text-gray-700 mb-4">高级配置</h3>
         <el-form
-          :inline="true"
           :model="form"
           :rules="rules"
           label-position="top"
@@ -879,6 +875,10 @@
     .el-icon {
       margin-right: 8px;
     }
+  }
+
+  :deep(.el-drawer__body) {
+    overflow-x: hidden;
   }
 
 

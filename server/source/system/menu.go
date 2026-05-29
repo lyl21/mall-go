@@ -63,8 +63,11 @@ func (i *initMenu) InitializeData(ctx context.Context) (next context.Context, er
 		// 业务模块父级菜单
 		{MenuLevel: 0, Hidden: false, ParentId: 0, Path: "store", Name: "store", Component: "view/routerHolder.vue", Sort: 10, Meta: Meta{Title: "门店管理", Icon: "office-building"}},
 		{MenuLevel: 0, Hidden: false, ParentId: 0, Path: "userManager", Name: "userManager", Component: "view/routerHolder.vue", Sort: 11, Meta: Meta{Title: "用户管理", Icon: "coordinate"}},
-		{MenuLevel: 0, Hidden: false, ParentId: 0, Path: "optometry", Name: "optometry", Component: "view/routerHolder.vue", Sort: 12, Meta: Meta{Title: "验光管理", Icon: "view"}},
-		{MenuLevel: 0, Hidden: false, ParentId: 0, Path: "mall", Name: "mall", Component: "view/routerHolder.vue", Sort: 13, Meta: Meta{Title: "商城管理", Icon: "shopping-cart"}},
+		{MenuLevel: 0, Hidden: false, ParentId: 0, Path: "device", Name: "device", Component: "view/routerHolder.vue", Sort: 12, Meta: Meta{Title: "设备管理", Icon: "monitor"}},
+		{MenuLevel: 0, Hidden: false, ParentId: 0, Path: "packages", Name: "packages", Component: "view/device/packages.vue", Sort: 13, Meta: Meta{Title: "安装包管理", Icon: "goods"}},
+		{MenuLevel: 0, Hidden: false, ParentId: 0, Path: "doorLock", Name: "doorLock", Component: "view/doorLock/doorLock.vue", Sort: 14, Meta: Meta{Title: "门锁管理", Icon: "lock"}},
+		{MenuLevel: 0, Hidden: false, ParentId: 0, Path: "optometry", Name: "optometry", Component: "view/routerHolder.vue", Sort: 15, Meta: Meta{Title: "验光管理", Icon: "view"}},
+		{MenuLevel: 0, Hidden: false, ParentId: 0, Path: "mall", Name: "mall", Component: "view/routerHolder.vue", Sort: 16, Meta: Meta{Title: "商城管理", Icon: "shopping-cart"}},
 	}
 
 	// 先创建父级菜单（ParentId = 0 的菜单）
@@ -123,15 +126,13 @@ func (i *initMenu) InitializeData(ctx context.Context) (next context.Context, er
 		{MenuLevel: 1, Hidden: true, ParentId: menuNameMap["store"], Path: "storeMember", Name: "storeMember", Component: "view/store/storeMember.vue", Sort: 2, Meta: Meta{Title: "门店成员", Icon: "avatar"}},
 
 		// 门店管理子菜单 - 门锁管理
-		{MenuLevel: 1, Hidden: false, ParentId: menuNameMap["store"], Path: "doorLock", Name: "doorLock", Component: "view/mall/doorLock.vue", Sort: 5, Meta: Meta{Title: "门锁管理", Icon: "lock"}},
-	
+		// {MenuLevel: 1, Hidden: false, ParentId: menuNameMap["store"], Path: "doorLock", Name: "doorLock", Component: "view/doorLock/doorLock.vue", Sort: 5, Meta: Meta{Title: "门锁管理", Icon: "lock"}},
+
 		// 用户管理子菜单
-		{MenuLevel: 1, Hidden: false, ParentId: menuNameMap["userManager"], Path: "mxUser", Name: "mxUser", Component: "view/store/mxUser.vue", Sort: 1, Meta: Meta{Title: "用户列表", Icon: "user"}},
+		{MenuLevel: 1, Hidden: false, ParentId: menuNameMap["userManager"], Path: "mxUser", Name: "mxUser", Component: "view/userManager/mxUser.vue", Sort: 1, Meta: Meta{Title: "用户列表", Icon: "user"}},
 		// 设备管理子菜单（父级）
-		{MenuLevel: 1, Hidden: false, ParentId: menuNameMap["store"], Path: "device", Name: "device", Component: "view/routerHolder.vue", Sort: 4, Meta: Meta{Title: "设备管理", Icon: "monitor"}},
-		{MenuLevel: 2, Hidden: false, ParentId: menuNameMap["device"], Path: "optometryDevice", Name: "optometryDevice", Component: "view/store/activation.vue", Sort: 1, Meta: Meta{Title: "验光仪", Icon: "view"}},
-		{MenuLevel: 2, Hidden: false, ParentId: menuNameMap["device"], Path: "niutouApp", Name: "niutouApp", Component: "view/store/activation.vue", Sort: 2, Meta: Meta{Title: "牛头APP", Icon: "mobile"}},
-		// {MenuLevel: 1, Hidden: false, ParentId: menuNameMap["store"], Path: "packages", Name: "packages", Component: "view/store/packages.vue", Sort: 5, Meta: Meta{Title: "安装包管理", Icon: "goods"}},
+		{MenuLevel: 1, Hidden: false, ParentId: menuNameMap["device"], Path: "optometryDevice", Name: "optometryDevice", Component: "view/device/activation.vue", Sort: 1, Meta: Meta{Title: "验光仪", Icon: "view"}},
+		{MenuLevel: 1, Hidden: false, ParentId: menuNameMap["device"], Path: "niutouApp", Name: "niutouApp", Component: "view/device/activation.vue", Sort: 2, Meta: Meta{Title: "牛头APP", Icon: "mobile"}},
 
 		// 验光管理子菜单
 		{MenuLevel: 1, Hidden: false, ParentId: menuNameMap["optometry"], Path: "optometryRecords", Name: "optometryRecords", Component: "view/optometry/records.vue", Sort: 1, Meta: Meta{Title: "验光记录", Icon: "document"}},
@@ -140,7 +141,7 @@ func (i *initMenu) InitializeData(ctx context.Context) (next context.Context, er
 		{MenuLevel: 1, Hidden: false, ParentId: menuNameMap["mall"], Path: "goodsCategory", Name: "goodsCategory", Component: "view/mall/category.vue", Sort: 1, Meta: Meta{Title: "商品分类", Icon: "grid"}},
 		{MenuLevel: 1, Hidden: false, ParentId: menuNameMap["mall"], Path: "goodsSpu", Name: "goodsSpu", Component: "view/mall/spu.vue", Sort: 2, Meta: Meta{Title: "商品管理", Icon: "goods"}},
 		{MenuLevel: 1, Hidden: false, ParentId: menuNameMap["mall"], Path: "mallOrder", Name: "mallOrder", Component: "view/mall/order.vue", Sort: 3, Meta: Meta{Title: "订单管理", Icon: "list"}},
-}
+	}
 
 	// 创建子菜单
 	if err = db.Create(&childMenus).Error; err != nil {

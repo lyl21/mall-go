@@ -1,6 +1,8 @@
 package wechat
 
 import (
+	"regexp"
+
 	"github.com/flipped-aurora/gin-vue-admin/server/middleware"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/common/response"
 	"github.com/flipped-aurora/gin-vue-admin/server/utils"
@@ -67,7 +69,12 @@ func (a *WxMiniApi) GetMyOptometryRecords(c *gin.Context) {
 		response.FailWithMessage("未获取到用户信息", c)
 		return
 	}
-	records, err := wxMiniService.GetMyOptometryRecords(openId.(string))
+	openIdStr, ok := openId.(string)
+	if !ok || openIdStr == "" {
+		response.FailWithMessage("用户信息异常", c)
+		return
+	}
+	records, err := wxMiniService.GetMyOptometryRecords(openIdStr)
 	if err != nil {
 		global.GVA_LOG.Error("获取验光记录失败", zap.Error(err))
 		response.FailWithMessage(err.Error(), c)
@@ -94,13 +101,25 @@ func (a *WxMiniApi) BindPhone(c *gin.Context) {
 		return
 	}
 
+	// 校验手机号格式（中国大陆手机号）
+	mobileReg := regexp.MustCompile(`^1[3-9]\d{9}$`)
+	if !mobileReg.MatchString(req.Phone) {
+		response.FailWithMessage("手机号格式不正确", c)
+		return
+	}
+
 	openId, exists := c.Get("openId")
 	if !exists {
 		response.FailWithMessage("未获取到用户信息", c)
 		return
 	}
+	openIdStr, ok := openId.(string)
+	if !ok || openIdStr == "" {
+		response.FailWithMessage("用户信息异常", c)
+		return
+	}
 
-	if err := wxMiniService.BindPhone(openId.(string), req.Phone); err != nil {
+	if err := wxMiniService.BindPhone(openIdStr, req.Phone); err != nil {
 		global.GVA_LOG.Error("绑定手机号失败", zap.Error(err))
 		response.FailWithMessage(err.Error(), c)
 		return

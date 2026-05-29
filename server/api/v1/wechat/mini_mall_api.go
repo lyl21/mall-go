@@ -42,6 +42,13 @@ func (a *MiniMallApi) GetGoodsCategoryTree(c *gin.Context) {
 func (a *MiniMallApi) GetGoodsSpuPage(c *gin.Context) {
 	page := utils.GetIntQuery(c, "page", 1)
 	pageSize := utils.GetIntQuery(c, "pageSize", 10)
+	// 限制 pageSize 最大值，防止内存溢出
+	if pageSize > 50 {
+		pageSize = 50
+	}
+	if pageSize < 1 {
+		pageSize = 10
+	}
 	categoryId := c.Query("categoryId")
 	name := c.Query("name")
 

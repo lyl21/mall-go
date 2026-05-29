@@ -450,6 +450,9 @@ func (h *MessageHandlers) HandleControlRequest(connectionID string, msg *SocketM
 			// 如果查询失败，为了安全起见，不允许发起请求
 			return CreateErrorMessage(msg.SessionID, msg.TxnID, msg.Role, "无法验证用户身份，不允许发起远程验光请求")
 		}
+	} else {
+		// 没有用户ID的连接不允许发起远控请求
+		return CreateErrorMessage(msg.SessionID, msg.TxnID, msg.Role, "用户身份未知，不允许发起远程验光请求")
 	}
 
 	// 检查是否已在活跃会话中
@@ -657,13 +660,13 @@ func (h *MessageHandlers) HandleControlResponse(connectionID string, msg *Socket
 		acceptedMsg.Data = &rawData
 
 		msgBytes, _ := acceptedMsg.ToJSON()
-		
+
 		global.GVA_LOG.Info("准备发送消息给被控端",
 			zap.String("sessionId", *msg.SessionID),
 			zap.String("controlledConnectionId", pendingRequest.ControlledConnectionID),
 			zap.String("cmd", string(CmdControlAccepted)),
 			zap.String("messageJson", string(msgBytes)))
-		
+
 		h.connectionManager.SendToConnection(pendingRequest.ControlledConnectionID, msgBytes)
 
 		global.GVA_LOG.Info("已通知被控端并返回 RTC 配置",
@@ -1077,6 +1080,12 @@ func (h *MessageHandlers) HandleSyncSnapshot(connectionID string, msg *SocketMes
 		return CreateErrorMessage(msg.SessionID, msg.TxnID, msg.Role, "Missing sessionId")
 	}
 
+	// 校验连接是否属于该会话
+	connInfo := h.connectionManager.GetConnectionInfo(connectionID)
+	if connInfo == nil || connInfo.SessionID == nil || *connInfo.SessionID != *msg.SessionID {
+		return CreateErrorMessage(msg.SessionID, msg.TxnID, msg.Role, "未授权: 不属于该会话")
+	}
+
 	// 获取会话状态
 	sessionState := h.sessionManager.GetSessionState(*msg.SessionID)
 	if sessionState == nil {
@@ -1138,7 +1147,7 @@ func (h *MessageHandlers) startApplyTimeoutCheck(sessionID, txnID, controlledCon
 
 // generateUniqueSessionID 生成唯一会话ID
 func (h *MessageHandlers) generateUniqueSessionID() string {
-	return fmt.Sprintf("session_%d", time.Now().UnixMilli())
+	return fmt.Sprintf("session_%d_%s", time.Now().UnixMilli(), RandomString(6))
 }
 
 // generateRtcConfig 生成RTC配置

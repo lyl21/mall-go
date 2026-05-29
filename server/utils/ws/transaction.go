@@ -41,7 +41,7 @@ func (t *TransactionRecord) IsTimeout(timeoutMs int64) bool {
 func (t *TransactionRecord) IsProcessed() bool {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
-	return t.Status == TransactionStatusCompleted
+	return t.Status == TransactionStatusCompleted || t.Status == TransactionStatusFailed || t.Status == TransactionStatusTimeout
 }
 
 // UpdateStatus 更新状态

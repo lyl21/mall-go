@@ -65,10 +65,25 @@ func (a *ClientUserApi) Logout(c *gin.Context) {
 }
 
 func (a *ClientUserApi) RefreshToken(c *gin.Context) {
-	userId, _ := c.Get("clientUserId")
-	phone, _ := c.Get("clientPhone")
+	userIdVal, exists := c.Get("clientUserId")
+	if !exists {
+		ClientFailWithMessage("用户信息缺失", c)
+		return
+	}
+	phoneVal, exists := c.Get("clientPhone")
+	if !exists {
+		ClientFailWithMessage("用户信息缺失", c)
+		return
+	}
 
-	token, err := utils.GenerateClientToken(userId.(int64), phone.(string))
+	userId, ok1 := userIdVal.(int64)
+	phone, ok2 := phoneVal.(string)
+	if !ok1 || !ok2 {
+		ClientFailWithMessage("用户信息格式错误", c)
+		return
+	}
+
+	token, err := utils.GenerateClientToken(userId, phone)
 	if err != nil {
 		ClientFailWithMessage("刷新token失败", c)
 		return
@@ -78,9 +93,18 @@ func (a *ClientUserApi) RefreshToken(c *gin.Context) {
 }
 
 func (a *ClientUserApi) GetUserInfo(c *gin.Context) {
-	userId, _ := c.Get("clientUserId")
+	userIdVal, exists := c.Get("clientUserId")
+	if !exists {
+		ClientFailWithMessage("用户信息缺失", c)
+		return
+	}
+	userId, ok := userIdVal.(int64)
+	if !ok {
+		ClientFailWithMessage("用户信息格式错误", c)
+		return
+	}
 
-	user, err := storeService.UserServiceApp.GetMxUser(userId.(int64))
+	user, err := storeService.UserServiceApp.GetMxUser(userId)
 	if err != nil {
 		ClientFailWithMessage("获取用户信息失败", c)
 		return
@@ -111,8 +135,8 @@ func (a *ClientUserApi) Register(c *gin.Context) {
 
 	newUser := store.MxUser{
 		PhoneNumber: req.PhoneNumber,
-		Password:   req.Password,
-		Name:       req.Name,
+		Password:    req.Password,
+		Name:        req.Name,
 	}
 
 	if err := storeService.UserServiceApp.CreateMxUser(newUser); err != nil {
@@ -126,9 +150,9 @@ func (a *ClientUserApi) Register(c *gin.Context) {
 
 func (a *ClientUserApi) ChangePassword(c *gin.Context) {
 	var req struct {
-		PhoneNumber  string `json:"phoneNumber" binding:"required"`
-		OldPassword  string `json:"oldPassword" binding:"required"`
-		NewPassword  string `json:"newPassword" binding:"required"`
+		PhoneNumber string `json:"phoneNumber" binding:"required"`
+		OldPassword string `json:"oldPassword" binding:"required"`
+		NewPassword string `json:"newPassword" binding:"required"`
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {

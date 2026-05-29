@@ -142,9 +142,8 @@ func cancelOrder(order *mall.OrderInfo) error {
 	}
 
 	// 更新订单状态为已关闭
-	status := "5"
 	if err := tx.Model(order).Updates(map[string]interface{}{
-		"status": &status,
+		"status": "5",
 	}).Error; err != nil {
 		tx.Rollback()
 		return err

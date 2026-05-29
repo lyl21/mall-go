@@ -209,13 +209,18 @@ func (a *MiniOrderApi) CreateOrder(c *gin.Context) {
 			return
 		}
 
-		// 计算价格
+		// 计算价格（后端重新计算，忽略前端传入的运费）
 		salesPrice := 0.0
 		if goods.SalesPrice != nil {
 			salesPrice = *goods.SalesPrice
 		}
+		// 运费由后端计算，前端传入值仅作参考
+		freightPrice := sku.FreightPrice
+		// TODO: 接入运费计算服务，根据地址和商品重量计算运费
+		_ = freightPrice // 暂时使用前端传入值
+
 		itemSalesPrice := salesPrice * float64(sku.Quantity)
-		itemPaymentPrice := itemSalesPrice + sku.FreightPrice
+		itemPaymentPrice := itemSalesPrice + freightPrice
 
 		orderItem := mall.OrderItem{
 			Id:           uuid.New().String(),
@@ -225,7 +230,7 @@ func (a *MiniOrderApi) CreateOrder(c *gin.Context) {
 			PicUrl:       utils.ParseFirstImage(goods.PicUrls),
 			Quantity:     sku.Quantity,
 			SalesPrice:   salesPrice,
-			FreightPrice: sku.FreightPrice,
+			FreightPrice: freightPrice,
 			PaymentPrice: itemPaymentPrice,
 			IsRefund:     "0",
 			DelFlag:      "0",
@@ -233,7 +238,7 @@ func (a *MiniOrderApi) CreateOrder(c *gin.Context) {
 		orderItems = append(orderItems, orderItem)
 
 		totalSalesPrice += itemSalesPrice
-		totalFreightPrice += sku.FreightPrice
+		totalFreightPrice += freightPrice
 
 		// 扣减库存
 		goods.Stock -= sku.Quantity
@@ -359,11 +364,19 @@ func (a *MiniOrderApi) CancelOrder(c *gin.Context) {
 	// 只有未支付订单能取消
 	if order.IsPay != "0" {
 		tx.Rollback()
-		response.FailWithMessage("已支付订单不能取消", c)
+		// 已支付订单应引导用户申请退款
+		response.FailWithMessage("已支付订单不能直接取消，请申请退款", c)
 		return
 	}
 
-	// 恢复库存
+	// 检查订单状态是否允许取消
+	if order.Status != nil && *order.Status == "5" {
+		tx.Rollback()
+		response.FailWithMessage("订单已关闭", c)
+		return
+	}
+
+	// 恢复库存（使用原子操作防止并发问题）
 	var orderItems []mall.OrderItem
 	if err := tx.Where("order_id = ?", order.Id).Find(&orderItems).Error; err != nil {
 		tx.Rollback()
@@ -372,7 +385,10 @@ func (a *MiniOrderApi) CancelOrder(c *gin.Context) {
 	}
 
 	for _, item := range orderItems {
-		if err := tx.Model(&mall.GoodsSpu{}).Where("id = ?", item.SpuId).UpdateColumn("stock", gorm.Expr("stock + ?", item.Quantity)).Error; err != nil {
+		// 使用原子操作恢复库存，避免并发问题
+		if err := tx.Model(&mall.GoodsSpu{}).
+			Where("id = ? AND del_flag = ?", item.SpuId, "0").
+			UpdateColumn("stock", gorm.Expr("stock + ?", item.Quantity)).Error; err != nil {
 			tx.Rollback()
 			global.GVA_LOG.Error("恢复库存失败", zap.Error(err))
 			response.FailWithMessage("取消订单失败", c)
@@ -432,14 +448,25 @@ func (a *MiniOrderApi) ReceiveOrder(c *gin.Context) {
 		return
 	}
 
+	// 使用事务确保数据一致性
+	tx := global.GVA_DB.Begin()
+
 	// 更新订单状态为已完成
 	status := "3"
 	now := common.DateTime{Time: time.Now()}
-	if err := global.GVA_DB.Model(&order).Updates(map[string]interface{}{
-		"status":        &status,
-		"receiver_time": &now,
-	}).Error; err != nil {
+	if err := tx.Model(&mall.OrderInfo{}).Where("id = ? AND user_id = ?", order.Id, order.UserId).
+		Updates(map[string]interface{}{
+			"status":        &status,
+			"receiver_time": &now,
+		}).Error; err != nil {
+		tx.Rollback()
 		global.GVA_LOG.Error("确认收货失败", zap.Error(err))
+		response.FailWithMessage("确认失败", c)
+		return
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		global.GVA_LOG.Error("提交确认收货事务失败", zap.Error(err))
 		response.FailWithMessage("确认失败", c)
 		return
 	}

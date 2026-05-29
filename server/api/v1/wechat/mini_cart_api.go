@@ -19,7 +19,11 @@ func getWxUserIdFromContext(c *gin.Context) string {
 	if !exists {
 		return ""
 	}
-	return val.(string)
+	strVal, ok := val.(string)
+	if !ok {
+		return ""
+	}
+	return strVal
 }
 
 // GetCartPage 获取购物车列表
@@ -121,8 +125,17 @@ func (a *MiniCartApi) AddCart(c *gin.Context) {
 	}
 
 	var goods mall.GoodsSpu
-	if err := global.GVA_DB.Where("id = ?", cart.SpuId).First(&goods).Error; err != nil {
-		response.FailWithMessage("商品不存在", c)
+	if err := global.GVA_DB.Where("id = ? AND shelf = 1 AND del_flag = ?", cart.SpuId, "0").First(&goods).Error; err != nil {
+		response.FailWithMessage("商品不存在或已下架", c)
+		return
+	}
+
+	// 校验购物车商品数量
+	if cart.Quantity <= 0 {
+		cart.Quantity = 1
+	}
+	if cart.Quantity > 99 {
+		response.FailWithMessage("单个商品数量不能超过99", c)
 		return
 	}
 	cart.SpuName = goods.Name

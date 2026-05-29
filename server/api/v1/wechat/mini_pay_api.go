@@ -318,26 +318,26 @@ func (a *MiniPayApi) payNotifyV2(c *gin.Context) {
 
 // notifyOrder 订单支付成功处理（SQL乐观锁防并发重复处理）
 func (a *MiniPayApi) notifyOrder(order *mall.OrderInfo) {
-	// 先尝试原子更新 is_pay，如果有并发回调，只有一个能更新成功
-	result := global.GVA_DB.Model(&mall.OrderInfo{}).
-		Where("id = ? AND is_pay = ?", order.Id, "0").
-		Update("is_pay", "1")
-	if result.Error != nil || result.RowsAffected == 0 {
-		return
-	}
-
 	tx := global.GVA_DB.Begin()
 
 	now := time.Now()
 	status := "1"
 
-	if err := tx.Model(order).Updates(map[string]interface{}{
-		"is_pay":       "1",
-		"status":       &status,
-		"payment_time": &now,
-	}).Error; err != nil {
+	// 使用乐观锁：只有 is_pay=0 的订单才能更新，防止并发重复处理
+	result := tx.Model(&mall.OrderInfo{}).
+		Where("id = ? AND is_pay = ?", order.Id, "0").
+		Updates(map[string]interface{}{
+			"is_pay":       "1",
+			"status":       &status,
+			"payment_time": &now,
+		})
+	if result.Error != nil {
 		tx.Rollback()
-		global.GVA_LOG.Error("更新订单支付状态失败", zap.Error(err))
+		global.GVA_LOG.Error("更新订单支付状态失败", zap.Error(result.Error))
+		return
+	}
+	if result.RowsAffected == 0 {
+		tx.Rollback()
 		return
 	}
 
@@ -422,10 +422,13 @@ func (a *MiniPayApi) Refund(c *gin.Context) {
 		return
 	}
 
-	status := "5"
-	global.GVA_DB.Model(&order).Updates(map[string]interface{}{
-		"status": &status,
-	})
+	// 退款是异步操作，标记订单为退款中状态（而非直接关闭）
+	// 退款回调确认后再更新为已关闭
+	refundStatus := "6"
+	global.GVA_DB.Model(&mall.OrderInfo{}).Where("id = ?", order.Id).
+		Updates(map[string]interface{}{
+			"status": &refundStatus,
+		})
 
 	response.OkWithMessage("退款申请成功", c)
 }

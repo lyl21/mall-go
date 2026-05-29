@@ -40,18 +40,46 @@ func initBizRouter(routers ...*gin.RouterGroup) {
 
 	// 注册设备WebSocket路由,后台用
 	publicGroup.GET("/ws/device", func(c *gin.Context) {
+		// TODO: 增加后台管理 JWT 认证，防止未授权访问
 		utils.DeviceWSManager.HandleDeviceWS(c.Writer, c.Request)
 	})
 
 	// 验光仪设备WebSocket: ws://IP:PORT/equipment/设备ID
 	publicGroup.GET("/equipment/:equipmentId", func(c *gin.Context) {
 		equipmentId := c.Param("equipmentId")
+		// TODO: 增加设备认证（如设备密钥），防止未授权设备连接
 		utils.DeviceWSManager.HandleDeviceWSByPath(c.Writer, c.Request, equipmentId, "验光仪")
 	})
 
 	// 牛头APP WebSocket（远控通信 + 设备在线状态同步）
+	// 注意：此路由在 publicGroup 中，需要通过 query 参数 token 进行身份校验
 	publicGroup.GET("/ws/user/:userId", func(c *gin.Context) {
 		userIdStr := c.Param("userId")
+
+		// 从 query 参数获取 token 进行身份校验
+		tokenStr := c.Query("token")
+		if tokenStr == "" {
+			global.GVA_LOG.Warn("WebSocket连接缺少token参数", zap.String("userID", userIdStr))
+			c.JSON(401, gin.H{"error": "missing token"})
+			return
+		}
+
+		// 校验 token 有效性
+		valid, claims := utils.ValidateClientToken(tokenStr)
+		if !valid || claims == nil {
+			global.GVA_LOG.Warn("WebSocket连接token无效", zap.String("userID", userIdStr))
+			c.JSON(401, gin.H{"error": "invalid token"})
+			return
+		}
+
+		// 校验 URL 中的 userId 与 token 中的 userId 一致
+		if strconv.FormatInt(claims.UserId, 10) != userIdStr {
+			global.GVA_LOG.Warn("WebSocket连接userId与token不匹配",
+				zap.String("urlUserId", userIdStr),
+				zap.Int64("tokenUserId", claims.UserId))
+			c.JSON(403, gin.H{"error": "userId mismatch"})
+			return
+		}
 
 		userId, err := strconv.ParseInt(userIdStr, 10, 64)
 		if err != nil {

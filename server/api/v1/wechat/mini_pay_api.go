@@ -1,6 +1,7 @@
 package wechat
 
 import (
+	"context"
 	"crypto/aes"
 	"crypto/cipher"
 	"encoding/base64"
@@ -18,6 +19,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-pay/gopay"
 	"github.com/go-pay/gopay/wechat"
+	"github.com/wechatpay-apiv3/wechatpay-go/core"
+	"github.com/wechatpay-apiv3/wechatpay-go/services/refunddomestic"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
@@ -407,7 +410,62 @@ func (a *MiniPayApi) Refund(c *gin.Context) {
 		return
 	}
 
-	// V2 退款（后续可升级为 V3）
+	// V3 退款或 V2 降级
+	var wxSuccess bool
+	if wxPay.IsV3Configured() {
+		wxSuccess = a.refundV3(&order, req)
+	} else {
+		wxSuccess = a.refundV2(c, &order, req)
+	}
+
+	if !wxSuccess {
+		return
+	}
+
+	status := "5"
+	global.GVA_DB.Model(&order).Updates(map[string]interface{}{
+		"status": &status,
+	})
+
+	response.OkWithMessage("退款申请成功", c)
+}
+
+// refundV3 V3 退款（wechatpay-go SDK）
+func (a *MiniPayApi) refundV3(order *mall.OrderInfo, req RefundRequest) bool {
+	payClient, err := wxPay.GetClient()
+	if err != nil {
+		global.GVA_LOG.Error("V3退款-获取支付客户端失败", zap.Error(err))
+		return false
+	}
+
+	refundNo := utils.GenerateOrderNo()
+	refundFee := int64(req.RefundFee * 100)
+	if refundFee == 0 {
+		refundFee = int64(order.PaymentPrice * 100)
+	}
+
+	svc := refunddomestic.RefundsApiService{Client: payClient}
+	_, _, err = svc.Create(context.Background(),
+		refunddomestic.CreateRequest{
+			OutTradeNo:  core.String(order.OrderNo),
+			OutRefundNo: core.String(refundNo),
+			Amount: &refunddomestic.AmountReq{
+				Total:    core.Int64(int64(order.PaymentPrice * 100)),
+				Refund:   core.Int64(refundFee),
+				Currency: core.String("CNY"),
+			},
+		},
+	)
+	if err != nil {
+		global.GVA_LOG.Error("V3退款失败", zap.Error(err))
+		return false
+	}
+
+	return true
+}
+
+// refundV2 V2 退款（go-pay 兼容）
+func (a *MiniPayApi) refundV2(c *gin.Context, order *mall.OrderInfo, req RefundRequest) bool {
 	appId := global.GVA_CONFIG.Wechat.MiniAppID
 	mchId := global.GVA_CONFIG.Wechat.MchID
 	apiKey := global.GVA_CONFIG.Wechat.APIKey
@@ -432,22 +490,16 @@ func (a *MiniPayApi) Refund(c *gin.Context) {
 	if err != nil {
 		global.GVA_LOG.Error("微信退款失败", zap.Error(err))
 		response.FailWithMessage("退款申请失败", c)
-		return
+		return false
 	}
 
 	if wxRsp.ReturnCode != gopay.SUCCESS {
 		global.GVA_LOG.Error("微信退款返回失败", zap.String("return_msg", wxRsp.ReturnMsg))
 		response.FailWithMessage(wxRsp.ReturnMsg, c)
-		return
+		return false
 	}
 
-	status := "5"
-	global.GVA_DB.Model(&order).Updates(map[string]interface{}{
-		"status":    &status,
-		"is_refund": "1",
-	})
-
-	response.OkWithMessage("退款申请成功", c)
+	return true
 }
 
 // RefundNotify 微信退款回调

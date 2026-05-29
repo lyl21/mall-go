@@ -201,6 +201,7 @@ func (a *MiniRemoteApi) RemoteDoorOpen(c *gin.Context) {
 			"cmd":      "door_open",
 			"deviceId": req.DeviceID,
 			"duration": req.Duration,
+			"userId":   c.GetString("wxUserId"),
 		})
 	}
 

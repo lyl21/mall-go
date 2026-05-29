@@ -121,14 +121,16 @@ func (a *MiniCartApi) AddCart(c *gin.Context) {
 	}
 
 	var goods mall.GoodsSpu
-	if err := global.GVA_DB.Where("id = ?", cart.SpuId).First(&goods).Error; err == nil {
-		cart.SpuName = goods.Name
-		if goods.SalesPrice != nil {
-			cart.AddPrice = *goods.SalesPrice
-		}
-		if goods.PicUrls != "" {
-			cart.PicUrl = utils.ParseFirstImage(goods.PicUrls)
-		}
+	if err := global.GVA_DB.Where("id = ?", cart.SpuId).First(&goods).Error; err != nil {
+		response.FailWithMessage("商品不存在", c)
+		return
+	}
+	cart.SpuName = goods.Name
+	if goods.SalesPrice != nil {
+		cart.AddPrice = *goods.SalesPrice
+	}
+	if goods.PicUrls != "" {
+		cart.PicUrl = utils.ParseFirstImage(goods.PicUrls)
 	}
 
 	cart.Id = uuid.New().String()

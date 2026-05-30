@@ -1,4 +1,4 @@
-name: Deploy to 1Panel
+name: Deploy
 
 on:
   push:
@@ -8,7 +8,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: SSH 登录服务器并拉取代码
+      - name: SSH 部署：拉取代码并重启容器
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.SERVER_SSH_HOST }}
@@ -17,37 +17,4 @@ jobs:
           script: |
             cd /home/XM/mall-go
             git pull origin main
-
-      - name: 重启 xm-server 容器
-        env:
-          API_KEY: ${{ secrets.ONEPANEL_API_KEY }}
-          PANEL_URL: "http://admin.ximingtech.com:28080"
-          CONTAINER_ID: "xm-server"
-        run: |
-          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$PANEL_URL/api/v1/container/restart" \
-            -H "Authorization: Bearer $API_KEY" \
-            -H "Content-Type: application/json" \
-            -d "{\"id\": \"$CONTAINER_ID\"}")
-          echo "xm-server restart HTTP status: $HTTP_CODE"
-          if [ "$HTTP_CODE" -ne 200 ]; then
-            echo "xm-server restart failed, HTTP status: $HTTP_CODE"
-            exit 1
-          fi
-          echo "xm-server restarted successfully"
-
-      - name: 重启 xm-web 容器
-        env:
-          API_KEY: ${{ secrets.ONEPANEL_API_KEY }}
-          PANEL_URL: "http://admin.ximingtech.com:28080"
-          CONTAINER_ID: "xm-web"
-        run: |
-          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$PANEL_URL/api/v1/container/restart" \
-            -H "Authorization: Bearer $API_KEY" \
-            -H "Content-Type: application/json" \
-            -d "{\"id\": \"$CONTAINER_ID\"}")
-          echo "xm-web restart HTTP status: $HTTP_CODE"
-          if [ "$HTTP_CODE" -ne 200 ]; then
-            echo "xm-web restart failed, HTTP status: $HTTP_CODE"
-            exit 1
-          fi
-          echo "xm-web restarted successfully"
+            docker restart xm-server xm-web

@@ -14,7 +14,7 @@ type MxUser struct {
 	DateOfBirth             *common.DateTime `json:"dateOfBirth" gorm:"column:date_of_birth;comment:出生年月"`
 	Age                     *int             `json:"age" gorm:"column:age;type:int(11);comment:年龄"`
 	PhoneNumber             string           `json:"phoneNumber" gorm:"column:phone_number;type:varchar(50);not null;uniqueIndex:u_p;comment:手机号码"`
-	Password                string           `json:"password" gorm:"column:password;type:varchar(255);not null;default:'';comment:密码"`
+	Password                string           `json:"-" gorm:"column:password;type:varchar(255);not null;default:'';comment:密码"`
 	QQNumber                string           `json:"qqNumber" gorm:"column:qq_number;type:varchar(50);default:'';comment:qq号"`
 	EmailAddress            string           `json:"emailAddress" gorm:"column:email_address;type:varchar(50);default:'';comment:邮箱"`
 	IdentificationNumber    string           `json:"identificationNumber" gorm:"column:identification_number;type:varchar(50);default:'';comment:身份证号"`

@@ -235,12 +235,20 @@ func (a *MiniRemoteApi) RemoteDoorOpen(c *gin.Context) {
 		zap.String("wxUserId", wxUserId))
 
 	if wsmanager.WSManager != nil {
-		wsmanager.WSManager.SendToUser(0, map[string]interface{}{
-			"cmd":      "door_open",
-			"deviceId": req.DeviceID,
-			"duration": req.Duration,
-			"userId":   c.GetString("wxUserId"),
-		})
+		// 远程开门：通过设备WebSocket管理器发送命令给设备
+		if utils.DeviceWSManager != nil {
+			sent := utils.DeviceWSManager.SendToDevice(req.DeviceID, map[string]interface{}{
+				"cmd":      "door_open",
+				"deviceId": req.DeviceID,
+				"duration": req.Duration,
+				"userId":   wxUserId,
+			})
+			if !sent {
+				global.GVA_LOG.Warn("远程开门失败：设备不在线", zap.String("deviceId", req.DeviceID))
+				response.FailWithMessage("设备不在线，无法开门", c)
+				return
+			}
+		}
 	}
 
 	response.OkWithMessage("开门命令已发送", c)

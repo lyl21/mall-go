@@ -138,6 +138,13 @@ func (a *MiniCartApi) AddCart(c *gin.Context) {
 		response.FailWithMessage("单个商品数量不能超过99", c)
 		return
 	}
+	// 检查购物车总数量上限
+	var totalCount int64
+	global.GVA_DB.Model(&mall.ShoppingCart{}).Where("user_id = ? AND del_flag = ?", userId, "0").Count(&totalCount)
+	if totalCount >= 200 {
+		response.FailWithMessage("购物车商品数量已达上限", c)
+		return
+	}
 	cart.SpuName = goods.Name
 	if goods.SalesPrice != nil {
 		cart.AddPrice = *goods.SalesPrice

@@ -61,25 +61,20 @@ func initBizRouter(routers ...*gin.RouterGroup) {
 		utils.DeviceWSManager.HandleDeviceWS(c.Writer, c.Request)
 	})
 
-	// 验光仪设备WebSocket: ws://IP:PORT/equipment/设备ID（需要设备密钥认证）
+	// 验光仪设备WebSocket: ws://IP:PORT/equipment/设备ID（设备密钥认证，不使用JWT）
 	publicGroup.GET("/equipment/:equipmentId", func(c *gin.Context) {
 		equipmentId := c.Param("equipmentId")
-		// 设备认证：通过query参数token校验设备密钥
-		tokenStr := c.Query("token")
-		if tokenStr == "" {
-			global.GVA_LOG.Warn("设备WebSocket连接缺少token", zap.String("equipmentId", equipmentId))
-			c.JSON(401, gin.H{"error": "missing token"})
+		// 设备认证：通过query参数key校验设备密钥（硬件设备无法管理JWT刷新）
+		deviceKey := c.Query("key")
+		if deviceKey == "" {
+			global.GVA_LOG.Warn("设备WebSocket连接缺少key参数", zap.String("equipmentId", equipmentId))
+			c.JSON(401, gin.H{"error": "missing key"})
 			return
 		}
-		// 校验设备token（后台管理JWT或设备专用密钥）
-		j := utils.NewJWT()
-		if _, err := j.ParseToken(tokenStr); err != nil {
-			// 非后台JWT，尝试作为设备密钥校验
-			if !validateDeviceToken(equipmentId, tokenStr) {
-				global.GVA_LOG.Warn("设备WebSocket认证失败", zap.String("equipmentId", equipmentId))
-				c.JSON(401, gin.H{"error": "invalid token"})
-				return
-			}
+		if !validateDeviceToken(equipmentId, deviceKey) {
+			global.GVA_LOG.Warn("设备WebSocket认证失败", zap.String("equipmentId", equipmentId))
+			c.JSON(401, gin.H{"error": "invalid key"})
+			return
 		}
 		utils.DeviceWSManager.HandleDeviceWSByPath(c.Writer, c.Request, equipmentId, "验光仪")
 	})
@@ -162,7 +157,7 @@ func initBizRouter(routers ...*gin.RouterGroup) {
 	// 初始化音视频WebSocket管理器
 	utils.InitAgoraWSManager()
 
-	// 注册音视频WebSocket路由（需要客户端token认证）
+	// 注册音视频WebSocket路由（客户端token认证，信令服务仅需基本验证）
 	publicGroup.GET("/ws/agora", func(c *gin.Context) {
 		tokenStr := c.Query("token")
 		if tokenStr == "" {
@@ -170,12 +165,11 @@ func initBizRouter(routers ...*gin.RouterGroup) {
 			c.JSON(401, gin.H{"error": "missing token"})
 			return
 		}
-		// 支持后台管理JWT或客户端token
-		j := utils.NewJWT()
-		if _, err := j.ParseToken(tokenStr); err != nil {
-			// 非后台JWT，尝试客户端token
-			valid, _ := utils.ValidateClientToken(tokenStr)
-			if !valid {
+		// 优先尝试客户端token，其次尝试后台JWT
+		valid, _ := utils.ValidateClientToken(tokenStr)
+		if !valid {
+			j := utils.NewJWT()
+			if _, err := j.ParseToken(tokenStr); err != nil {
 				global.GVA_LOG.Warn("音视频WebSocket认证失败")
 				c.JSON(401, gin.H{"error": "invalid token"})
 				return

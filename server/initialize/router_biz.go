@@ -145,7 +145,7 @@ func initBizRouter(routers ...*gin.RouterGroup) {
 	// 初始化音视频WebSocket管理器
 	utils.InitAgoraWSManager()
 
-	// 注册音视频WebSocket路由（客户端token认证，信令服务仅需基本验证）
+	// 注册音视频WebSocket路由（支持多种token认证）
 	publicGroup.GET("/ws/agora", func(c *gin.Context) {
 		tokenStr := c.Query("token")
 		if tokenStr == "" {
@@ -153,15 +153,17 @@ func initBizRouter(routers ...*gin.RouterGroup) {
 			c.JSON(401, gin.H{"error": "missing token"})
 			return
 		}
-		// 优先尝试客户端token，其次尝试后台JWT
-		valid, _ := utils.ValidateClientToken(tokenStr)
-		if !valid {
-			j := utils.NewJWT()
-			if _, err := j.ParseToken(tokenStr); err != nil {
-				global.GVA_LOG.Warn("音视频WebSocket认证失败")
-				c.JSON(401, gin.H{"error": "invalid token"})
-				return
-			}
+		// 依次尝试：小程序token → 客户端token → 后台JWT
+		if ok, _ := utils.ValidateMiniToken(tokenStr); ok {
+			// 小程序用户（主要连接方）
+		} else if ok, _ := utils.ValidateClientToken(tokenStr); ok {
+			// 牛头APP用户
+		} else if _, err := utils.NewJWT().ParseToken(tokenStr); err == nil {
+			// 后台管理
+		} else {
+			global.GVA_LOG.Warn("音视频WebSocket认证失败")
+			c.JSON(401, gin.H{"error": "invalid token"})
+			return
 		}
 		utils.AgoraWSManager.HandleAgoraWS(c.Writer, c.Request)
 	})

@@ -85,7 +85,8 @@ func (m *OrderTimeoutManager) checkAndCancelTimeoutOrders() {
 	deadline := time.Now().Add(-OrderTimeoutDuration)
 
 	var orders []mall.OrderInfo
-	err := global.GVA_DB.Where("is_pay = ? AND del_flag = ? AND create_time < ?", "0", "0", deadline).Find(&orders).Error
+	err := global.GVA_DB.Where("is_pay = ? AND del_flag = ? AND create_time < ?", "0", "0", deadline).
+		Where("status = ? OR status IS NULL", "0").Find(&orders).Error
 	if err != nil {
 		global.GVA_LOG.Error("查询超时订单失败", zap.Error(err))
 		return
@@ -122,9 +123,22 @@ func (m *OrderTimeoutManager) checkAndCancelTimeoutOrders() {
 	}
 }
 
-// cancelOrder 取消订单（恢复库存）
+// cancelOrder 取消订单（恢复库存，使用乐观锁防并发）
 func cancelOrder(order *mall.OrderInfo) error {
 	tx := global.GVA_DB.Begin()
+
+	// 使用乐观锁：只有 is_pay=0 且 status=0 的订单才能取消
+	result := tx.Model(&mall.OrderInfo{}).
+		Where("id = ? AND is_pay = ? AND (status = ? OR status IS NULL)", order.Id, "0", "0").
+		Update("status", "5")
+	if result.Error != nil {
+		tx.Rollback()
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		tx.Rollback()
+		return nil // 已被其他进程处理
+	}
 
 	// 查询订单商品
 	var orderItems []mall.OrderItem
@@ -141,22 +155,14 @@ func cancelOrder(order *mall.OrderInfo) error {
 		}
 	}
 
-	// 更新订单状态为已关闭
-	if err := tx.Model(order).Updates(map[string]interface{}{
-		"status": "5",
-	}).Error; err != nil {
-		tx.Rollback()
-		return err
-	}
-
 	return tx.Commit().Error
 }
 
 // OrderTimeoutInfo 订单超时信息
 type OrderTimeoutInfo struct {
-	OrderId   string    `json:"orderId"`
-	OrderNo   string    `json:"orderNo"`
-	ExpireAt  time.Time `json:"expireAt"`
+	OrderId  string    `json:"orderId"`
+	OrderNo  string    `json:"orderNo"`
+	ExpireAt time.Time `json:"expireAt"`
 }
 
 // GetOrderTimeoutInfo 获取订单超时信息

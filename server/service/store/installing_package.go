@@ -21,7 +21,9 @@ func (s *InstallingPackageService) DeleteInstallingPackage(pkg storeModel.Instal
 }
 
 func (s *InstallingPackageService) UpdateInstallingPackage(pkg storeModel.InstallingPackage) (err error) {
-	err = global.GVA_DB.Select("packageName", "app", "url", "versionName", "note", "forceUpdate").Save(&pkg).Error
+	// 使用GORM列名（snake_case），而非JSON标签名
+	// 原来使用JSON标签名（如packageName）导致GORM无法识别字段，更新失败
+	err = global.GVA_DB.Select("package_name", "app", "url", "version_name", "note", "forced_updating").Save(&pkg).Error
 	return err
 }
 

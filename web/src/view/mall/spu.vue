@@ -114,10 +114,10 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, watch, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
-import { getGoodsSpuList, createGoodsSpu, updateGoodsSpu, deleteGoodsSpu, getGoodsCategoryTree } from '@/api/mall'
+import { getGoodsSpuList, createGoodsSpu, updateGoodsSpu, deleteGoodsSpu, getGoodsCategoryList } from '@/api/mall'
 import { getUrl } from '@/utils/image'
 
 const searchInfo = ref({})
@@ -226,7 +226,15 @@ const getTableData = async () => {
 
 const getCategoryList = async () => {
   const res = await getGoodsCategoryList({ page: 1, pageSize: 100 })
-  if (res.code === 0) { categoryList.value = res.data.list || [] }
+  if (res.code === 0) {
+    // 构建级联选择器选项
+    const list = res.data.list || []
+    cascaderOptions.value = buildTree(list)
+    // 同时保存扁平映射，用于显示分类路径
+    const map = {}
+    list.forEach(item => { map[item.id] = item.name })
+    flatCategoryMap.value = map
+  }
 }
 
 const onSubmit = () => { page.value = 1; getTableData() }

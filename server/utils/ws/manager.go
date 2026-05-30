@@ -91,7 +91,12 @@ func (m *Manager) HandleWebSocketWithInfo(w http.ResponseWriter, r *http.Request
 		"dateTime":     time.Now().Format("2006-01-02 15:04:05"),
 		"message":      "WebSocket连接成功",
 	}
-	conn.WriteJSON(welcomeMsg)
+	if err := conn.WriteJSON(welcomeMsg); err != nil {
+		global.GVA_LOG.Error("发送欢迎消息失败，关闭连接", zap.Error(err))
+		m.connectionManager.DisconnectConnection(connectionID, "欢迎消息发送失败")
+		conn.Close()
+		return
+	}
 
 	// 启动消息读取循环
 	m.readLoop(connectionID, conn, userID)
@@ -171,9 +176,8 @@ func (m *Manager) StartSessionCleanup() {
 
 // IsUserOnline 检查用户是否在线
 func (m *Manager) IsUserOnline(userID int64) bool {
-	// 遍历所有连接，查找该用户的在线连接
-	// 这里简化实现，实际可以根据业务需求优化
-	return false
+	connIDs := m.connectionManager.GetConnectionIDsByUserID(userID)
+	return len(connIDs) > 0
 }
 
 // SendToUser 发送消息给指定用户

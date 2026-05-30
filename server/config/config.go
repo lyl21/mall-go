@@ -55,24 +55,24 @@ type Server struct {
 type WechatPayConfig struct {
 	MiniAppID                  string `mapstructure:"mini-app-id" json:"miniAppId" yaml:"mini-app-id"`
 	MchID                      string `mapstructure:"mch-id" json:"mchId" yaml:"mch-id"`
-	APIKey                     string `mapstructure:"api-key" json:"-" yaml:"api-key"`
+	APIKey                     string `mapstructure:"api-key" json:"apiKey" yaml:"api-key"`
 	NotifyURL                  string `mapstructure:"notify-url" json:"notifyUrl" yaml:"notify-url"`
 	MchCertificateSerialNumber string `mapstructure:"mch-cert-serial-no" json:"mchCertSerialNo" yaml:"mch-cert-serial-no"`
-	MchPrivateKeyPath          string `mapstructure:"mch-private-key-path" json:"-" yaml:"mch-private-key-path"`
-	MchAPIv3Key                string `mapstructure:"mch-apiv3-key" json:"-" yaml:"mch-apiv3-key"`
+	MchPrivateKeyPath          string `mapstructure:"mch-private-key-path" json:"mchPrivateKeyPath" yaml:"mch-private-key-path"`
+	MchAPIv3Key                string `mapstructure:"mch-apiv3-key" json:"mchApiv3Key" yaml:"mch-apiv3-key"`
 }
 
 // AgoraConfig Agora音视频配置
 type AgoraConfig struct {
 	AppId          string `mapstructure:"app-id" json:"appId" yaml:"app-id"`
-	AppCertificate string `mapstructure:"app-certificate" json:"-" yaml:"app-certificate"`
+	AppCertificate string `mapstructure:"app-certificate" json:"appCertificate" yaml:"app-certificate"`
 }
 
 // DoorLockConfig 第三方门锁平台配置
 type DoorLockConfig struct {
 	BaseURL  string `mapstructure:"base-url" json:"baseUrl" yaml:"base-url"`
 	Username string `mapstructure:"username" json:"username" yaml:"username"`
-	Password string `mapstructure:"password" json:"-" yaml:"password"`
+	Password string `mapstructure:"password" json:"password" yaml:"password"`
 	YardSn   string `mapstructure:"yard-sn" json:"yardSn" yaml:"yard-sn"`
 	Gyscode  string `mapstructure:"gyscode" json:"gyscode" yaml:"gyscode"`
 }

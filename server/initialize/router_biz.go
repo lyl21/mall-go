@@ -38,64 +38,21 @@ func initBizRouter(routers ...*gin.RouterGroup) {
 	wsmanager.WSManager.StartHeartbeatCheck()
 	wsmanager.WSManager.StartSessionCleanup()
 
-	// 注册设备WebSocket路由,后台用（需要后台管理JWT认证）
+	// 注册设备WebSocket路由（后台管理端连接，与原始ry逻辑一致：无额外认证）
 	publicGroup.GET("/ws/device", func(c *gin.Context) {
-		// 后台管理JWT认证：通过query参数token校验
-		tokenStr := c.Query("token")
-		if tokenStr == "" {
-			global.GVA_LOG.Warn("设备WebSocket连接缺少token")
-			c.JSON(401, gin.H{"error": "missing token"})
-			return
-		}
-		j := utils.NewJWT()
-		claims, err := j.ParseToken(tokenStr)
-		if err != nil {
-			global.GVA_LOG.Warn("设备WebSocket连接token无效", zap.Error(err))
-			c.JSON(401, gin.H{"error": "invalid token"})
-			return
-		}
-		global.GVA_LOG.Info("设备WebSocket已认证",
-			zap.String("username", claims.Username),
-			zap.Uint("userId", claims.BaseClaims.ID))
-
 		utils.DeviceWSManager.HandleDeviceWS(c.Writer, c.Request)
 	})
 
-	// 验光仪设备WebSocket: ws://IP:PORT/equipment/设备ID（内网设备，无需密钥认证）
+	// 验光仪设备WebSocket: ws://IP:PORT/equipment/设备ID（与原始ry逻辑一致：无认证）
 	publicGroup.GET("/equipment/:equipmentId", func(c *gin.Context) {
 		equipmentId := c.Param("equipmentId")
 		utils.DeviceWSManager.HandleDeviceWSByPath(c.Writer, c.Request, equipmentId, "验光仪")
 	})
 
 	// 牛头APP WebSocket（远控通信 + 设备在线状态同步）
-	// 注意：此路由在 publicGroup 中，需要通过 query 参数 token 进行身份校验
+	// 与原始ry逻辑一致：通过URL路径中的userId标识用户，无额外token认证
 	publicGroup.GET("/ws/user/:userId", func(c *gin.Context) {
 		userIdStr := c.Param("userId")
-
-		// 从 query 参数获取 token 进行身份校验
-		tokenStr := c.Query("token")
-		if tokenStr == "" {
-			global.GVA_LOG.Warn("WebSocket连接缺少token参数", zap.String("userID", userIdStr))
-			c.JSON(401, gin.H{"error": "missing token"})
-			return
-		}
-
-		// 校验 token 有效性
-		valid, claims := utils.ValidateClientToken(tokenStr)
-		if !valid || claims == nil {
-			global.GVA_LOG.Warn("WebSocket连接token无效", zap.String("userID", userIdStr))
-			c.JSON(401, gin.H{"error": "invalid token"})
-			return
-		}
-
-		// 校验 URL 中的 userId 与 token 中的 userId 一致
-		if strconv.FormatInt(claims.UserId, 10) != userIdStr {
-			global.GVA_LOG.Warn("WebSocket连接userId与token不匹配",
-				zap.String("urlUserId", userIdStr),
-				zap.Int64("tokenUserId", claims.UserId))
-			c.JSON(403, gin.H{"error": "userId mismatch"})
-			return
-		}
 
 		userId, err := strconv.ParseInt(userIdStr, 10, 64)
 		if err != nil {
@@ -145,24 +102,9 @@ func initBizRouter(routers ...*gin.RouterGroup) {
 	// 初始化音视频WebSocket管理器
 	utils.InitAgoraWSManager()
 
-	// 注册音视频WebSocket路由（牛头APP用户+后台管理，小程序用户通过Agora SDK直连声网不需要此WS）
+	// 注册音视频WebSocket路由（与原始ry逻辑一致：无额外认证）
+	// 原始ry项目中声网信令由Agora SDK自行处理，此路由为mall-go新增的WebRTC信令转发
 	publicGroup.GET("/ws/agora", func(c *gin.Context) {
-		tokenStr := c.Query("token")
-		if tokenStr == "" {
-			global.GVA_LOG.Warn("音视频WebSocket连接缺少token")
-			c.JSON(401, gin.H{"error": "missing token"})
-			return
-		}
-		// 依次尝试：客户端token（牛头APP验光师）→ 后台JWT（管理端）
-		// 小程序用户通过Agora SDK直连声网服务器，不走此WebSocket
-		valid, _ := utils.ValidateClientToken(tokenStr)
-		if !valid {
-			if _, err := utils.NewJWT().ParseToken(tokenStr); err != nil {
-				global.GVA_LOG.Warn("音视频WebSocket认证失败")
-				c.JSON(401, gin.H{"error": "invalid token"})
-				return
-			}
-		}
 		utils.AgoraWSManager.HandleAgoraWS(c.Writer, c.Request)
 	})
 

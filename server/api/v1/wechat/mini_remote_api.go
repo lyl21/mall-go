@@ -152,27 +152,13 @@ func (a *MiniRemoteApi) RemoteControl(c *gin.Context) {
 		return
 	}
 
-	// 校验命令白名单
-	allowedCommands := map[string]bool{
-		"focus_near":   true,
-		"focus_far":    true,
-		"switch_left":  true,
-		"switch_right": true,
-		"pause":        true,
-		"resume":       true,
-	}
-	if !allowedCommands[req.Command] {
-		response.FailWithMessage("不支持的控制命令", c)
-		return
-	}
+	// 与原始ry逻辑一致：远程控制无命令白名单限制，直接转发
+	// ry原始项目中远程控制通过WebSocket remote_req命令实现，无额外校验
 
 	global.GVA_LOG.Info("远程控制设备",
 		zap.String("deviceId", req.DeviceID),
 		zap.String("command", req.Command),
 		zap.String("wxUserId", wxUserId))
-
-	// 这里可以实现具体的远程控制逻辑
-	// 例如通过WebSocket发送控制命令给设备
 
 	response.OkWithMessage("控制命令已发送", c)
 }
@@ -223,10 +209,6 @@ func (a *MiniRemoteApi) RemoteDoorOpen(c *gin.Context) {
 
 	if req.Duration <= 0 {
 		req.Duration = 5 // 默认5秒
-	}
-	// 限制开门持续时间，防止异常值
-	if req.Duration > 30 {
-		req.Duration = 30
 	}
 
 	global.GVA_LOG.Info("远程开门",

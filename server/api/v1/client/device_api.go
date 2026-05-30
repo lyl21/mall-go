@@ -6,6 +6,7 @@ import (
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/common"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/store"
+	"github.com/flipped-aurora/gin-vue-admin/server/utils/upload"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
@@ -152,39 +153,45 @@ func (a *ClientDeviceApi) RegisterDevice(c *gin.Context) {
 	ClientOkWithData(device, c)
 }
 
-// UploadErrorLogRequest 上传错误日志请求
-type UploadErrorLogRequest struct {
-	EquipmentID string `json:"equipmentId" binding:"required"`
-	LogContent  string `json:"logContent" binding:"required"`
-}
-
-// UploadErrorLog 上传错误日志
+// UploadErrorLog 上传错误日志（与ry原始逻辑一致：文件上传方式）
 // @Tags      ClientDevice
 // @Summary   设备上传错误日志
-// @Accept    application/json
+// @Accept    multipart/form-data
 // @Produce   application/json
-// @Param     data  body      UploadErrorLogRequest  true  "日志信息"
-// @Success   200   {object}  response.Response{msg=string}  "上传成功"
+// @Param     equipmentID  formData  string                  true  "设备ID"
+// @Param     file         formData  file                    true  "日志文件"
+// @Success   200          {object}  response.Response{msg=string}  "上传成功"
 // @Router    /client/code/upload [post]
 func (a *ClientDeviceApi) UploadErrorLog(c *gin.Context) {
-	var req UploadErrorLogRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		ClientFailWithMessage("参数错误: "+err.Error(), c)
+	// 与ry原始MxActivationCodeController.uploadFile一致：表单方式接收equipmentID和文件
+	equipmentID := c.PostForm("equipmentID")
+	file, err := c.FormFile("file")
+	if err != nil {
+		ClientFailWithMessage("日志文件为空", c)
 		return
 	}
 
-	// 保存日志到文件或数据库
-	log := store.ErrorReportLog{
-		LogId:       uuid.New().String(),
-		EquipmentId: req.EquipmentID,
-		LogPath:     req.LogContent, // 实际应该保存到文件，这里简化处理
-	}
-
-	if err := global.GVA_DB.Create(&log).Error; err != nil {
-		global.GVA_LOG.Error("保存错误日志失败", zap.Error(err))
+	// 使用项目统一的文件上传工具保存文件
+	oss := upload.NewOss()
+	filePath, _, uploadErr := oss.UploadFile(file)
+	if uploadErr != nil {
+		global.GVA_LOG.Error("上传错误日志文件失败", zap.Error(uploadErr))
 		ClientFailWithMessage("上传失败", c)
 		return
 	}
 
-	ClientOkWithMessage("上传成功", c)
+	// 记录到数据库
+	log := store.ErrorReportLog{
+		LogId:       uuid.New().String(),
+		EquipmentId: equipmentID,
+		LogPath:     filePath,
+	}
+
+	if err := global.GVA_DB.Create(&log).Error; err != nil {
+		global.GVA_LOG.Error("保存错误日志记录失败", zap.Error(err))
+		ClientFailWithMessage("上传失败", c)
+		return
+	}
+
+	ClientOkWithMessage("日志上传成功:"+filePath, c)
 }

@@ -1,0 +1,43 @@
+name: Deploy to 1Panel
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 重启 xm-server 容器
+        env:
+          API_KEY: ${{ secrets.ONEPANEL_API_KEY }}
+          PANEL_URL: "http://47.113.195.159:28080"
+          CONTAINER_ID: "xm-server"
+        run: |
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$PANEL_URL/api/v1/container/restart" \
+            -H "Authorization: Bearer $API_KEY" \
+            -H "Content-Type: application/json" \
+            -d "{\"id\": \"$CONTAINER_ID\"}")
+          echo "xm-server restart HTTP status: $HTTP_CODE"
+          if [ "$HTTP_CODE" -ne 200 ]; then
+            echo "❌ xm-server 重启失败，HTTP状态码: $HTTP_CODE"
+            exit 1
+          fi
+          echo "✅ xm-server 重启成功"
+
+      - name: 重启 xm-web 容器
+        env:
+          API_KEY: ${{ secrets.ONEPANEL_API_KEY }}
+          PANEL_URL: "http://47.113.195.159:28080"
+          CONTAINER_ID: "xm-web"
+        run: |
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$PANEL_URL/api/v1/container/restart" \
+            -H "Authorization: Bearer $API_KEY" \
+            -H "Content-Type: application/json" \
+            -d "{\"id\": \"$CONTAINER_ID\"}")
+          echo "xm-web restart HTTP status: $HTTP_CODE"
+          if [ "$HTTP_CODE" -ne 200 ]; then
+            echo "❌ xm-web 重启失败，HTTP状态码: $HTTP_CODE"
+            exit 1
+          fi
+          echo "✅ xm-web 重启成功"

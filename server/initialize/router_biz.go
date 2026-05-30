@@ -38,16 +38,49 @@ func initBizRouter(routers ...*gin.RouterGroup) {
 	wsmanager.WSManager.StartHeartbeatCheck()
 	wsmanager.WSManager.StartSessionCleanup()
 
-	// 注册设备WebSocket路由,后台用
+	// 注册设备WebSocket路由,后台用（需要后台管理JWT认证）
 	publicGroup.GET("/ws/device", func(c *gin.Context) {
-		// TODO: 增加后台管理 JWT 认证，防止未授权访问
+		// 后台管理JWT认证：通过query参数token校验
+		tokenStr := c.Query("token")
+		if tokenStr == "" {
+			global.GVA_LOG.Warn("设备WebSocket连接缺少token")
+			c.JSON(401, gin.H{"error": "missing token"})
+			return
+		}
+		j := utils.NewJWT()
+		claims, err := j.ParseToken(tokenStr)
+		if err != nil {
+			global.GVA_LOG.Warn("设备WebSocket连接token无效", zap.Error(err))
+			c.JSON(401, gin.H{"error": "invalid token"})
+			return
+		}
+		global.GVA_LOG.Info("设备WebSocket已认证",
+			zap.String("username", claims.Username),
+			zap.Uint("userId", claims.BaseClaims.ID))
+
 		utils.DeviceWSManager.HandleDeviceWS(c.Writer, c.Request)
 	})
 
-	// 验光仪设备WebSocket: ws://IP:PORT/equipment/设备ID
+	// 验光仪设备WebSocket: ws://IP:PORT/equipment/设备ID（需要设备密钥认证）
 	publicGroup.GET("/equipment/:equipmentId", func(c *gin.Context) {
 		equipmentId := c.Param("equipmentId")
-		// TODO: 增加设备认证（如设备密钥），防止未授权设备连接
+		// 设备认证：通过query参数token校验设备密钥
+		tokenStr := c.Query("token")
+		if tokenStr == "" {
+			global.GVA_LOG.Warn("设备WebSocket连接缺少token", zap.String("equipmentId", equipmentId))
+			c.JSON(401, gin.H{"error": "missing token"})
+			return
+		}
+		// 校验设备token（后台管理JWT或设备专用密钥）
+		j := utils.NewJWT()
+		if _, err := j.ParseToken(tokenStr); err != nil {
+			// 非后台JWT，尝试作为设备密钥校验
+			if !validateDeviceToken(equipmentId, tokenStr) {
+				global.GVA_LOG.Warn("设备WebSocket认证失败", zap.String("equipmentId", equipmentId))
+				c.JSON(401, gin.H{"error": "invalid token"})
+				return
+			}
+		}
 		utils.DeviceWSManager.HandleDeviceWSByPath(c.Writer, c.Request, equipmentId, "验光仪")
 	})
 
@@ -129,8 +162,25 @@ func initBizRouter(routers ...*gin.RouterGroup) {
 	// 初始化音视频WebSocket管理器
 	utils.InitAgoraWSManager()
 
-	// 注册音视频WebSocket路由
+	// 注册音视频WebSocket路由（需要客户端token认证）
 	publicGroup.GET("/ws/agora", func(c *gin.Context) {
+		tokenStr := c.Query("token")
+		if tokenStr == "" {
+			global.GVA_LOG.Warn("音视频WebSocket连接缺少token")
+			c.JSON(401, gin.H{"error": "missing token"})
+			return
+		}
+		// 支持后台管理JWT或客户端token
+		j := utils.NewJWT()
+		if _, err := j.ParseToken(tokenStr); err != nil {
+			// 非后台JWT，尝试客户端token
+			valid, _ := utils.ValidateClientToken(tokenStr)
+			if !valid {
+				global.GVA_LOG.Warn("音视频WebSocket认证失败")
+				c.JSON(401, gin.H{"error": "invalid token"})
+				return
+			}
+		}
 		utils.AgoraWSManager.HandleAgoraWS(c.Writer, c.Request)
 	})
 
@@ -185,4 +235,14 @@ func initBizRouter(routers ...*gin.RouterGroup) {
 
 	// 大模型聊天桥接API（无需 JWT，供 Control App 调用）
 	router.RouterGroupApp.Chat.InitChatPublicRouter(publicGroup)
+}
+
+// validateDeviceToken 校验设备密钥token
+func validateDeviceToken(equipmentId string, token string) bool {
+	// 从配置中获取设备密钥，与token比对
+	deviceKey := global.GVA_CONFIG.DoorLock.Gyscode
+	if deviceKey == "" {
+		deviceKey = "hyzh"
+	}
+	return token == deviceKey
 }

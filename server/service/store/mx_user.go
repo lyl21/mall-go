@@ -21,7 +21,6 @@ func (s *UserService) DeleteMxUser(user storeModel.MxUser) (err error) {
 }
 
 func (s *UserService) UpdateMxUser(user storeModel.MxUser) (err error) {
-	// 只更新允许编辑的字段，避免覆盖自动计算的字段如最近验光时间
 	updateData := map[string]interface{}{
 		"name":                      user.Name,
 		"gender":                    user.Gender,
@@ -43,6 +42,10 @@ func (s *UserService) UpdateMxUser(user storeModel.MxUser) (err error) {
 		"remarks":                   user.Remarks,
 		"glasses_need":              user.GlassesNeed,
 		"dominant_eye":              user.DominantEye,
+	}
+	// 仅当密码非空时更新（修改密码场景）
+	if user.Password != "" {
+		updateData["password"] = user.Password
 	}
 	err = global.GVA_DB.Table("mx_user").Where("user_id = ?", user.UserId).Updates(updateData).Error
 	return err

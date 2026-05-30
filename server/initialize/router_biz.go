@@ -61,21 +61,9 @@ func initBizRouter(routers ...*gin.RouterGroup) {
 		utils.DeviceWSManager.HandleDeviceWS(c.Writer, c.Request)
 	})
 
-	// 验光仪设备WebSocket: ws://IP:PORT/equipment/设备ID（设备密钥认证，不使用JWT）
+	// 验光仪设备WebSocket: ws://IP:PORT/equipment/设备ID（内网设备，无需密钥认证）
 	publicGroup.GET("/equipment/:equipmentId", func(c *gin.Context) {
 		equipmentId := c.Param("equipmentId")
-		// 设备认证：通过query参数key校验设备密钥（硬件设备无法管理JWT刷新）
-		deviceKey := c.Query("key")
-		if deviceKey == "" {
-			global.GVA_LOG.Warn("设备WebSocket连接缺少key参数", zap.String("equipmentId", equipmentId))
-			c.JSON(401, gin.H{"error": "missing key"})
-			return
-		}
-		if !validateDeviceToken(equipmentId, deviceKey) {
-			global.GVA_LOG.Warn("设备WebSocket认证失败", zap.String("equipmentId", equipmentId))
-			c.JSON(401, gin.H{"error": "invalid key"})
-			return
-		}
 		utils.DeviceWSManager.HandleDeviceWSByPath(c.Writer, c.Request, equipmentId, "验光仪")
 	})
 
@@ -229,14 +217,4 @@ func initBizRouter(routers ...*gin.RouterGroup) {
 
 	// 大模型聊天桥接API（无需 JWT，供 Control App 调用）
 	router.RouterGroupApp.Chat.InitChatPublicRouter(publicGroup)
-}
-
-// validateDeviceToken 校验设备密钥token
-func validateDeviceToken(equipmentId string, token string) bool {
-	// 从配置中获取设备密钥，与token比对
-	deviceKey := global.GVA_CONFIG.DoorLock.Gyscode
-	if deviceKey == "" {
-		deviceKey = "hyzh"
-	}
-	return token == deviceKey
 }

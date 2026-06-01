@@ -24,7 +24,7 @@ type WxMiniService struct{}
 var (
 	WxMiniServiceApp = new(WxMiniService)
 	miniProgramInst  *miniprogram.MiniProgram
-	miniProgramOnce  sync.Once
+	miniProgramMu    sync.Mutex
 	miniProgramErr   error
 )
 
@@ -68,23 +68,29 @@ func toSafeWxUser(u wechatModel.WxUser) WxUserSafeVO {
 	}
 }
 
-// getMiniProgram 获取微信小程序实例（sync.Once 单例）
+// getMiniProgram 获取微信小程序实例（懒加载，失败可重试）
 func (s *WxMiniService) getMiniProgram() (*miniprogram.MiniProgram, error) {
-	miniProgramOnce.Do(func() {
-		appID := global.GVA_CONFIG.WechatMiniProgram.AppID
-		appSecret := global.GVA_CONFIG.WechatMiniProgram.AppSecret
-		if appID == "" || appSecret == "" {
-			miniProgramErr = errors.New("微信小程序 AppID/AppSecret 未配置，请在 config.yaml 中设置 wechat-mini-program")
-			return
-		}
-		wc := wechat.NewWechat()
-		cfg := &miniProgramConfig.Config{
-			AppID:     appID,
-			AppSecret: appSecret,
-		}
-		miniProgramInst = wc.GetMiniProgram(cfg)
-	})
-	return miniProgramInst, miniProgramErr
+	miniProgramMu.Lock()
+	defer miniProgramMu.Unlock()
+
+	if miniProgramInst != nil {
+		return miniProgramInst, nil
+	}
+
+	appID := global.GVA_CONFIG.WechatMiniProgram.AppID
+	appSecret := global.GVA_CONFIG.WechatMiniProgram.AppSecret
+	if appID == "" || appSecret == "" {
+		miniProgramErr = errors.New("微信小程序 AppID/AppSecret 未配置，请在 config.yaml 中设置 wechat-mini-program")
+		return nil, miniProgramErr
+	}
+	wc := wechat.NewWechat()
+	cfg := &miniProgramConfig.Config{
+		AppID:     appID,
+		AppSecret: appSecret,
+	}
+	miniProgramInst = wc.GetMiniProgram(cfg)
+	miniProgramErr = nil
+	return miniProgramInst, nil
 }
 
 // MiniLogin 小程序登录（按微信官方时序）

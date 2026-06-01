@@ -9,14 +9,12 @@ type WxMiniRouter struct{}
 
 // InitWxMiniPublicRouter 注册小程序公开路由（不需要 JWT 认证）
 func (r *WxMiniRouter) InitWxMiniPublicRouter(publicGroup *gin.RouterGroup) {
-	miniGroup := publicGroup.Group("mini")
-	{
-		miniGroup.POST("login", wxMiniApi.MiniLogin)
-	}
 
 	// 小程序商城公开API
-	maGroup := publicGroup.Group("weixin/api/ma")
+	maGroup := publicGroup.Group("mini")
 	{
+		// 用户登录（公开）
+		maGroup.POST("wxuser/login", miniWxUserApi.WxUserLogin)
 		// Banner
 		maGroup.GET("banner/list", miniMallApi.GetBannerList)
 		// 分类
@@ -44,6 +42,10 @@ func (r *WxMiniRouter) InitWxMiniRouter(publicGroup *gin.RouterGroup) {
 	// 小程序商城私有API（需 JWT）
 	maGroup := publicGroup.Group("weixin/api/ma").Use(middleware.MiniJWTAuth())
 	{
+		// 用户信息
+		maGroup.GET("wxuser", miniWxUserApi.WxUserGet)
+		maGroup.POST("wxuser", miniWxUserApi.WxUserSave)
+		maGroup.POST("wxuser/logout", miniWxUserApi.WxUserLogout)
 		// 购物车
 		maGroup.GET("shoppingcart/page", miniCartApi.GetCartPage)
 		maGroup.GET("shoppingcart/count", miniCartApi.GetCartCount)

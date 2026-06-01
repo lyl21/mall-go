@@ -7,9 +7,9 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// 客户端响应码，与 Java RuoYi 服务保持一致
+// 客户端响应码
 const (
-	SUCCESS        = 200 // 操作成功
+	SUCCESS        = 0   // 操作成功
 	CREATED        = 201 // 对象创建成功
 	ACCEPTED       = 202 // 请求已经被接受
 	NO_CONTENT     = 204 // 操作已经执行成功，但是没有返回数据

@@ -46,13 +46,13 @@ func (a *MiniAddressApi) GetAddressPage(c *gin.Context) {
 	response.OkWithData(gin.H{"list": list, "total": total}, c)
 }
 
-// AddAddress 添加地址
+// AddAddress 添加/更新地址（前端只调 POST，id 存在时走更新逻辑）
 // @Tags      MiniAddress
-// @Summary   小程序添加地址
+// @Summary   小程序新增/保存地址
 // @Accept    application/json
 // @Produce   application/json
 // @Param     data  body      mall.UserAddress  true  "地址信息"
-// @Success   200   {object}  response.Response{msg=string}  "添加成功"
+// @Success   200   {object}  response.Response{msg=string}  "保存成功"
 // @Router    /weixin/api/ma/useraddress [post]
 func (a *MiniAddressApi) AddAddress(c *gin.Context) {
 	var addr mall.UserAddress
@@ -85,6 +85,21 @@ func (a *MiniAddressApi) AddAddress(c *gin.Context) {
 	// 如果设置为默认地址，取消其他默认地址
 	if addr.IsDefault == "1" {
 		global.GVA_DB.Model(&mall.UserAddress{}).Where("user_id = ?", addr.UserId).Update("is_default", "0")
+	}
+
+	// 如果带了 id 且属于当前用户，走更新逻辑
+	if addr.Id != "" {
+		var existing mall.UserAddress
+		if err := global.GVA_DB.Where("id = ? AND user_id = ? AND del_flag = ?", addr.Id, userId, "0").First(&existing).Error; err == nil {
+			addr.DelFlag = "0"
+			if err := global.GVA_DB.Model(&existing).Updates(&addr).Error; err != nil {
+				global.GVA_LOG.Error("更新地址失败", zap.Error(err))
+				response.FailWithMessage("更新失败", c)
+				return
+			}
+			response.OkWithData(existing, c)
+			return
+		}
 	}
 
 	addr.Id = uuid.New().String()

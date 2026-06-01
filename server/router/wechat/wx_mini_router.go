@@ -72,21 +72,8 @@ func (r *WxMiniRouter) InitWxMiniRouter(publicGroup *gin.RouterGroup) {
 		// 支付
 		maGroup.POST("orderinfo/unifiedOrder", miniPayApi.UnifiedOrder)
 		maGroup.POST("orderinfo/refunds", miniPayApi.Refund)
-		// 远程控制/开门
+		// 远程开门
 		maGroup.POST("remote/door/open", miniRemoteApi.RemoteDoorOpen)
-		maGroup.POST("remote/control", miniRemoteApi.RemoteControl)
-		maGroup.GET("remote/online-users", miniRemoteApi.GetOnlineUsers)
-		maGroup.POST("remote/token", miniRemoteApi.GetRemoteOptometryToken)
-		maGroup.GET("remote/ws-url", miniRemoteApi.GetRemoteOptometryWsUrl)
-		maGroup.GET("remote/session-info", miniRemoteApi.GetRemoteOptometrySessionInfo)
-		maGroup.GET("remote/health", miniRemoteApi.GetRemoteOptometryHealth)
-		maGroup.GET("remote/stats", miniRemoteApi.GetRemoteOptometryStats)
-		// 音视频
-		maGroup.POST("agora/token", miniAgoraApi.GetAgoraToken)
-		maGroup.POST("agora/join", miniAgoraApi.JoinRoom)
-		maGroup.POST("agora/leave", miniAgoraApi.LeaveRoom)
-		maGroup.GET("agora/room", miniAgoraApi.GetRoomInfo)
-		maGroup.GET("agora/rooms", miniAgoraApi.GetRoomList)
 
 	}
 }

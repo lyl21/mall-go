@@ -10,6 +10,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      - name: Test SSH connectivity
+        run: |
+          echo "Testing SSH connection to ${{ secrets.SERVER_SSH_HOST }}:${{ secrets.SERVER_SSH_PORT }}"
+          timeout 30 bash -c 'nc -zv ${{ secrets.SERVER_SSH_HOST }} ${{ secrets.SERVER_SSH_PORT }}' || echo "Connection test completed with exit code $?"
       - name: Add server host key
         run: |
           mkdir -p ~/.ssh

@@ -72,7 +72,7 @@ App({
       wx.login({
         success: res => {
           if (res.code) {
-            this.api.login({ jsCode: res.code }).then(res => {
+            this.api.login({ code: res.code }).then(res => {
               wx.hideLoading()
               const wxUser = res.data
               this.globalData.thirdSession = wxUser.sessionKey

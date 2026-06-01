@@ -248,7 +248,7 @@ tencent-cos:
     base-url: https://gin.vue.admin
     path-prefix: github.com/flipped-aurora/gin-vue-admin/server
 wechat:
-    mini-app-id: "wx457a99d69770774d"
+    mini-app-id: ""
     mch-id: "1712186848"
     api-key: "3eafd7767e5243488e79b0f68e7da100"
     notify-url: "admin.ximingtech.com"

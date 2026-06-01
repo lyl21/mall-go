@@ -211,6 +211,27 @@ func (s *WxMiniService) BindPhone(openId, phone string) (err error) {
 	return
 }
 
+// GetPhoneNumber 使用微信手机号获取code换取真实手机号
+func (s *WxMiniService) GetPhoneNumber(code string) (phone string, err error) {
+	mp, err := s.getMiniProgram()
+	if err != nil {
+		return
+	}
+
+	// 调用微信接口获取手机号
+	// 注意：微信手机号获取需要使用用户授权的 code，通过 cloudbase 或直接调用解密接口
+	// 这里实现一个简单版本，实际生产需要根据微信官方文档实现解密逻辑
+	// 参考：https://developers.weixin.qq.com/miniprogram/dev/api-backend/open-api/user-info/auth.getPhoneNumber.html
+
+	// 当前返回模拟数据，实际项目需要对接微信官方接口
+	// 解密需要 session_key，需要从数据库获取用户的 session_key
+	_ = mp
+	_ = code
+
+	// 返回空，让调用方从数据库读取已存储的手机号
+	return "", errors.New("未实现微信手机号解密，请先通过其他方式绑定手机号")
+}
+
 // newUserID 生成唯一用户 ID（UUID，去掉连字符共 32 字符）
 func newUserID() string {
 	return fmt.Sprintf("%x", [16]byte(uuid.New()))

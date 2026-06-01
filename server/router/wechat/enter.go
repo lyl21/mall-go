@@ -13,16 +13,19 @@ type RouterGroup struct {
 }
 
 var (
-	wxUserApi       = api.ApiGroupApp.WechatApiGroup.WxUserApi
-	wxMsgApi        = api.ApiGroupApp.WechatApiGroup.WxMsgApi
-	wxMenuApi       = api.ApiGroupApp.WechatApiGroup.WxMenuApi
-	wxAutoReplyApi  = api.ApiGroupApp.WechatApiGroup.WxAutoReplyApi
-	wxMiniApi       = api.ApiGroupApp.WechatApiGroup.WxMiniApi
-	miniMallApi     = api.ApiGroupApp.WechatApiGroup.MiniMallApi
-	miniCartApi     = api.ApiGroupApp.WechatApiGroup.MiniCartApi
-	miniAddressApi  = api.ApiGroupApp.WechatApiGroup.MiniAddressApi
-	miniOrderApi    = api.ApiGroupApp.WechatApiGroup.MiniOrderApi
-	miniPayApi      = api.ApiGroupApp.WechatApiGroup.MiniPayApi
-	miniRemoteApi   = api.ApiGroupApp.WechatApiGroup.MiniRemoteApi
-	miniAgoraApi    = api.ApiGroupApp.WechatApiGroup.MiniAgoraApi
+	wxUserApi        = api.ApiGroupApp.WechatApiGroup.WxUserApi
+	wxMsgApi         = api.ApiGroupApp.WechatApiGroup.WxMsgApi
+	wxMenuApi        = api.ApiGroupApp.WechatApiGroup.WxMenuApi
+	wxAutoReplyApi   = api.ApiGroupApp.WechatApiGroup.WxAutoReplyApi
+	wxMiniApi        = api.ApiGroupApp.WechatApiGroup.WxMiniApi
+	miniWxUserApi    = api.ApiGroupApp.WechatApiGroup.MiniWxUserApi
+	miniOptometryApi = api.ApiGroupApp.WechatApiGroup.MiniOptometryApi
+	wxPhoneApi       = api.ApiGroupApp.WechatApiGroup.WxPhoneApi
+	miniMallApi      = api.ApiGroupApp.WechatApiGroup.MiniMallApi
+	miniCartApi      = api.ApiGroupApp.WechatApiGroup.MiniCartApi
+	miniAddressApi   = api.ApiGroupApp.WechatApiGroup.MiniAddressApi
+	miniOrderApi     = api.ApiGroupApp.WechatApiGroup.MiniOrderApi
+	miniPayApi       = api.ApiGroupApp.WechatApiGroup.MiniPayApi
+	miniRemoteApi    = api.ApiGroupApp.WechatApiGroup.MiniRemoteApi
+	miniAgoraApi     = api.ApiGroupApp.WechatApiGroup.MiniAgoraApi
 )

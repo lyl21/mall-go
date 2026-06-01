@@ -9,6 +9,8 @@ type ApiGroup struct {
 	WxAutoReplyApi
 	WxMiniApi
 	MiniWxUserApi
+	MiniOptometryApi
+	WxPhoneApi
 	MiniMallApi
 	MiniCartApi
 	MiniAddressApi

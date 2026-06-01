@@ -151,7 +151,46 @@ module.exports = {
     return request('/mini/useraddress/' + id, 'delete', null, false)
   },
   openDoor: (id,openId) => {
-    return request('/door/lock/open', 'post', { id: id, openId: openId }, true)
+    return request('/mini/remote/door/open', 'post', { id: id, openId: openId }, true)
+  },
+  // 远程控制接口
+  remoteControl: (data) => {//远程控制设备
+    return request('/mini/remote/control', 'post', data, true)
+  },
+  getOnlineUsers: () => {//获取在线用户
+    return request('/mini/remote/online-users', 'get', null, false)
+  },
+  // 远程验光接口
+  getRemoteToken: (data) => {//获取远程验光token
+    return request('/mini/remote/token', 'post', data, true)
+  },
+  getRemoteWsUrl: () => {//获取远程验光WebSocket地址
+    return request('/mini/remote/ws-url', 'get', null, false)
+  },
+  getSessionInfo: () => {//获取会话信息
+    return request('/mini/remote/session-info', 'get', null, false)
+  },
+  getRemoteHealth: () => {//获取远程验光健康状态
+    return request('/mini/remote/health', 'get', null, false)
+  },
+  getRemoteStats: () => {//获取远程验光统计
+    return request('/mini/remote/stats', 'get', null, false)
+  },
+  // 音视频接口
+  getAgoraToken: (data) => {//获取声网Token
+    return request('/mini/agora/token', 'post', data, true)
+  },
+  agoraJoin: (data) => {//加入房间
+    return request('/mini/agora/join', 'post', data, true)
+  },
+  agoraLeave: (data) => {//离开房间
+    return request('/mini/agora/leave', 'post', data, true)
+  },
+  getAgoraRoom: () => {//获取房间信息
+    return request('/mini/agora/room', 'get', null, false)
+  },
+  getAgoraRooms: () => {//获取房间列表
+    return request('/mini/agora/rooms', 'get', null, false)
   },
   phoneInfoGet: (data) => {//手机号获取接口
     return request('/mini/phone', 'get', data, true)

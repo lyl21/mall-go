@@ -14,7 +14,9 @@ echo "=== 2/3 构建 Docker 镜像（仅 COPY 二进制，不编译）==="
 DOCKER_BUILDKIT=1 docker build -t xm-server "$PROJECT_DIR/server/"
 
 echo ""
-echo "=== 3/3 重启容器 ==="
+echo "=== 3/3 重启容器（stop + 强制重建）==="
+docker-compose -f "$SCRIPT_DIR/docker-compose.yaml" stop server
+docker-compose -f "$SCRIPT_DIR/docker-compose.yaml" rm -f server
 docker-compose -f "$SCRIPT_DIR/docker-compose.yaml" up -d server
 echo ""
 echo "完成！"

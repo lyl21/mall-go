@@ -13,6 +13,7 @@ import (
 	"github.com/flipped-aurora/gin-vue-admin/server/utils"
 	"github.com/google/uuid"
 	"github.com/silenceper/wechat/v2"
+	"github.com/silenceper/wechat/v2/cache"
 	"github.com/silenceper/wechat/v2/miniprogram"
 	miniProgramConfig "github.com/silenceper/wechat/v2/miniprogram/config"
 	"go.uber.org/zap"
@@ -69,7 +70,7 @@ func toSafeWxUser(u wechatModel.WxUser) WxUserSafeVO {
 }
 
 // getMiniProgram 获取微信小程序实例（懒加载，失败可重试）
-func (s *WxMiniService) getMiniProgram() (*miniprogram.MiniProgram, error) {
+func (s *WxMiniService) getMiniProgram() (mp *miniprogram.MiniProgram, err error) {
 	miniProgramMu.Lock()
 	defer miniProgramMu.Unlock()
 
@@ -83,10 +84,21 @@ func (s *WxMiniService) getMiniProgram() (*miniprogram.MiniProgram, error) {
 		miniProgramErr = errors.New("微信小程序 AppID/AppSecret 未配置，请在 config.yaml 中设置 wechat-mini-program")
 		return nil, miniProgramErr
 	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("微信小程序 SDK 初始化异常: %v", r)
+			global.GVA_LOG.Error("getMiniProgram panic recovered", zap.Any("panic", r))
+			miniProgramInst = nil // 重置为 nil，允许下次重试
+			mp = nil
+		}
+	}()
+
 	wc := wechat.NewWechat()
 	cfg := &miniProgramConfig.Config{
 		AppID:     appID,
 		AppSecret: appSecret,
+		Cache:     cache.NewMemory(),
 	}
 	miniProgramInst = wc.GetMiniProgram(cfg)
 	if miniProgramInst == nil {

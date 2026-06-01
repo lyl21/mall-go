@@ -81,7 +81,7 @@ Page({
             addPrice: goodsSpu.salesPrice,
             spuName: goodsSpu.name,
             // picUrl: goodsSpu.picUrls ? '/dev-api' + goodsSpu.picUrls[0]:''
-            // picUrl: "https://admin.ximingtech.com:7500" + goodsSpu.picUrls[0]
+            // picUrl: config.imgBasePath + goodsSpu.picUrls[0]
             picUrl:  goodsSpu.picUrls[0]
 
           })
@@ -99,7 +99,7 @@ Page({
             addPrice: goodsSpu.salesPrice,
             spuName: goodsSpu.name,
             // picUrl: goodsSpu.picUrls ? '/dev-api' + goodsSpu.picUrls[0] : ''
-            // picUrl: "https://admin.ximingtech.com:7500" + goodsSpu.picUrls[0]
+            // picUrl: config.imgBasePath + goodsSpu.picUrls[0]
             picUrl:  goodsSpu.picUrls[0]
           })
             .then(res => {
@@ -131,7 +131,7 @@ Page({
             salesPrice: goodsSpu.salesPrice,
             spuName: goodsSpu.name,
             // picUrl: goodsSpu.picUrls ? '/dev-api'+goodsSpu.picUrls[0] : ''
-            // picUrl: "https://admin.ximingtech.com:7500" + goodsSpu.picUrl 
+            // picUrl: config.imgBasePath + goodsSpu.picUrl 
             picUrl:  goodsSpu.picUrls[0]
 
           }]

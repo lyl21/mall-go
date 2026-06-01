@@ -27,7 +27,7 @@
       <view class="cu-list menu">
         <view wx:for="{{ orderConfirmData }}" wx:key="index">
             <view class="flex align-center">
-              <image src="{{item.picUrl ? 'https://admin.ximingtech.com:7500'+item.picUrl : '/public/img/no_pic.png'}}" mode="aspectFill" class="row-img margin-top-xs"></image>
+              <image src="{{item.picUrl ? imgBasePath+item.picUrl : '/public/img/no_pic.png'}}" mode="aspectFill" class="row-img margin-top-xs"></image>
              </view> 
               <view class="row-info margin-left">
                 <view class="text-black margin-top-xl overflow-2">{{item.spuName}}</view>

@@ -4,6 +4,7 @@ const app = getApp()
 
 Page({
   data: {
+    imgBasePath: app.globalData.config.imgBasePath,
     tabCur: 0,
     orderStatus: [
       {

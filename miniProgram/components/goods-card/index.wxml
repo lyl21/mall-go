@@ -4,7 +4,7 @@
     <navigator hover-class='none' url='/pages/goods/goods-detail/index?id={{item.id}}'>
     <view class="text-black margin-top text-bold padding-lr overflow-1">{{item.name}}</view>
       <view class="img-box">
-        <image src="{{item.picUrls[0] ? 'https://admin.ximingtech.com:7500'+item.picUrls[0] : '/public/img/no_pic.png'}}" class="margin-top-xs"/>
+        <image src="{{item.picUrls[0] ? imgBasePath+item.picUrls[0] : '/public/img/no_pic.png'}}" class="margin-top-xs"/>
 
       </view>
       <view class="text-center margin-top">

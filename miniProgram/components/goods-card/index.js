@@ -1,4 +1,6 @@
 
+const __config = require('../../config/env')
+
 Component({
   properties: {
     goodsList: {
@@ -7,6 +9,7 @@ Component({
     }
   },
   data: {
+    imgBasePath: __config.imgBasePath
   },
   methods: {
 

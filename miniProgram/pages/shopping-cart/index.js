@@ -283,7 +283,7 @@ Page({
           salesPrice: shoppingCart.goodsSpu.salesPrice,
           spuName: shoppingCart.goodsSpu.name,
           // picUrl: shoppingCart.goodsSpu.picUrls?shoppingCart.goodsSpu.picUrls[0]:''
-          // picUrl: "https://admin.ximingtech.com:7500" + goodsSpu.picUrl 
+          // picUrl: config.imgBasePath + goodsSpu.picUrl 
           picUrl:  shoppingCart.picUrl
 
         }

@@ -3,7 +3,7 @@
   <view class="cu-item" wx:for="{{ goodsList }}" wx:key="index">
     <navigator hover-class='none' url='/pages/goods/goods-detail/index?id={{item.id}}'>
       <view class="content">
-        <image src="{{item.picUrls[0] ? 'https://admin.ximingtech.com:7500'+item.picUrls[0] : '/public/img/no_pic.png'}}" class="margin-top-xs"/>
+        <image src="{{item.picUrls[0] ? imgBasePath+item.picUrls[0] : '/public/img/no_pic.png'}}" class="margin-top-xs"/>
 
         <view class="desc solid-bottom row-info">
           <view class="text-black margin-top-sm overflow-2">{{item.name}}</view>

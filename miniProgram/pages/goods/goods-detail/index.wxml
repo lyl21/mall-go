@@ -3,7 +3,7 @@
   <swiper class="screen-swiper square-dot screen" indicator-dots="true" circular="true" autoplay="true" interval="5000" duration="500" bindchange="change">
     <swiper-item wx:for="{{goodsSpu.picUrls}}" wx:key="index">
       <!-- <image class="screen-image" src="{{item}}" mode="aspectFill"></image> -->
-      <image class="screen-image" src="{{'https://admin.ximingtech.com:7500'+item}}" mode="aspectFill"></image>
+      <image class="screen-image" src="{{config.imgBasePath+item}}" mode="aspectFill"></image>
     </swiper-item>
   </swiper>
   <view class='page-index cu-tag round'>{{currents}}/{{goodsSpu.picUrls.length || 1}}</view>

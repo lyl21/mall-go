@@ -3,6 +3,7 @@ const app = getApp()
 
 Page({
   data: {
+    imgBasePath: app.globalData.config.imgBasePath,
     orderInfo: null,
     id: null,
     callPay: false//是否直接调起支付

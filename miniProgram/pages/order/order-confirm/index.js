@@ -3,6 +3,7 @@ const app = getApp()
 
 Page({
   data: {
+    imgBasePath: app.globalData.config.imgBasePath,
     orderConfirmData: [],
     salesPrice: 0,
     paymentPrice: 0,

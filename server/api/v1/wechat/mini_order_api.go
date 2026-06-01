@@ -486,8 +486,8 @@ func generateOrderNo() string {
 // @Success   200  {object}  response.Response{data=[]map[string]interface{}}  "获取成功"
 // @Router    /mini/orderinfo/countAll [get]
 func (a *MiniOrderApi) OrderCountAll(c *gin.Context) {
-	wxUserId := c.GetUint("wxUserId")
-	if wxUserId == 0 {
+	userId := getWxUserIdFromContext(c)
+	if userId == "" {
 		response.FailWithMessage("获取用户信息失败", c)
 		return
 	}
@@ -501,7 +501,7 @@ func (a *MiniOrderApi) OrderCountAll(c *gin.Context) {
 
 	err := global.GVA_DB.Model(&mall.OrderInfo{}).
 		Select("COALESCE(status, '0') as status, COUNT(*) as count").
-		Where("user_id = ? AND del_flag = '0'", wxUserId).
+		Where("user_id = ? AND del_flag = '0'", userId).
 		Group("COALESCE(status, '0')").
 		Scan(&results).Error
 

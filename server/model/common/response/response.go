@@ -51,7 +51,7 @@ func FailWithMessage(message string, c *gin.Context) {
 
 func NoAuth(message string, c *gin.Context) {
 	c.JSON(http.StatusUnauthorized, Response{
-		7,
+		401,
 		nil,
 		message,
 	})

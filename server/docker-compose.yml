@@ -1,0 +1,16 @@
+version: '3'
+
+services:
+  mall-go-server:
+    container_name: mall-go-server
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8888:8888"
+    environment:
+      - TZ=Asia/Shanghai
+    volumes:
+      - ./config.docker.yaml:/go/src/github.com/flipped-aurora/gin-vue-admin/server/config.docker.yaml
+      - ./resource:/go/src/github.com/flipped-aurora/gin-vue-admin/server/resource
+    restart: always

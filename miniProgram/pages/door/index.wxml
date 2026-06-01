@@ -1,0 +1,7 @@
+<view class="door-page-container">
+  <view class="door-desc">请确保您已获得授权，点击下方按钮即可远程开门</view>
+  <!-- 手机号授权按钮，根据需要显示 -->
+    <button class="door-btn"  open-type="getPhoneNumber" bindgetphonenumber="getPhoneNumber" style="margin-top: 20rpx;">一键开门
+    </button>
+  
+</view>

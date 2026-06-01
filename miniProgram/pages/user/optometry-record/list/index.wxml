@@ -1,0 +1,92 @@
+<view class="page">
+  <view class="segmented">
+    <view class="segment {{tab==='list'?'active':''}}" data-tab="list" bindtap="switchTab">列表</view>
+    <view class="segment {{tab==='trend'?'active':''}}" data-tab="trend" bindtap="switchTab">趋势图</view>
+  </view>
+
+  <block wx:if="{{tab==='list'}}">
+    <view wx:if="{{loading}}" class="loading">加载中...</view>
+    <view wx:elif="{{list.length === 0}}" class="empty">暂无验光记录</view>
+    <view wx:else>
+      <block wx:for="{{list}}" wx:key="optometryRecordsId">
+        <view class="card" data-id="{{item.optometryRecordsId}}" bindtap="toDetail">
+          <view class="row">
+            <text class="label">顾客</text>
+            <text class="value">{{item.customerName}}</text>
+          </view>
+          <view class="row">
+            <text class="label">验光师</text>
+            <text class="value">{{item.optometristName}}</text>
+          </view>
+          <view class="row">
+            <text class="label">门店</text>
+            <text class="value">{{item.storeName}}</text>
+          </view>
+          <view class="row">
+            <text class="label">电话</text>
+            <text class="value">{{item.storePhone}}</text>
+          </view>
+          <view class="row">
+            <text class="label">时间</text>
+            <text class="value">{{item.createTime}}</text>
+          </view>
+        </view>
+      </block>
+    </view>
+  </block>
+
+  <block wx:elif="{{tab==='trend'}}">
+    <view wx:if="{{loading || trendLoading}}" class="loading">加载中...</view>
+    <view wx:elif="{{list.length === 0}}" class="empty">暂无验光记录</view>
+    <view wx:elif="{{!trendReady}}" class="loading">正在生成趋势图...</view>
+    <view wx:else>
+
+      <view wx:if="{{trendReady && activeIndex >= 0}}" class="chart-detail-card">
+        <view class="detail-title">选中日期：{{activeLabel}}</view>
+        <view class="detail-row">
+          <text class="detail-label">球镜(S)</text>
+          <text class="detail-value">右眼 {{scaSRightText[activeIndex] || '-'}}</text>
+          <text class="detail-value">左眼 {{scaSLeftText[activeIndex] || '-'}}</text>
+        </view>
+        <view class="detail-row">
+          <text class="detail-label">柱镜(C)</text>
+          <text class="detail-value">右眼 {{scaCRightText[activeIndex] || '-'}}</text>
+          <text class="detail-value">左眼 {{scaCLeftText[activeIndex] || '-'}}</text>
+        </view>
+        <view class="detail-row">
+          <text class="detail-label">轴位(A)</text>
+          <text class="detail-value">右眼 {{scaARightText[activeIndex] || '-'}}</text>
+          <text class="detail-value">左眼 {{scaALeftText[activeIndex] || '-'}}</text>
+        </view>
+      </view>
+
+
+      <view class="chart-legend">
+        <view class="legend-item">
+          <view class="legend-color legend-right"></view>
+          <text class="legend-text">右眼</text>
+        </view>
+        <view class="legend-item">
+          <view class="legend-color legend-left"></view>
+          <text class="legend-text">左眼</text>
+        </view>
+      </view>
+
+      <view class="chart-card">
+        <view class="chart-title">球镜(S)</view>
+        <canvas canvas-id="sChart" style="width: 100%; height: 180px;" width="320" height="180" bindtouchstart="onChartTouchStart" bindtouchmove="onChartTouchMove" bindtouchend="onChartTouchEnd" bindtouchcancel="onChartTouchEnd"></canvas>
+      </view>
+      <view class="chart-card">
+        <view class="chart-title">柱镜(C)</view>
+        <canvas canvas-id="cChart" style="width: 100%; height: 180px;" width="320" height="180" bindtouchstart="onChartTouchStart" bindtouchmove="onChartTouchMove" bindtouchend="onChartTouchEnd" bindtouchcancel="onChartTouchEnd"></canvas>
+      </view>
+      <view class="chart-card">
+        <view class="chart-title">轴位(A)</view>
+        <canvas canvas-id="aChart" style="width: 100%; height: 180px;" width="320" height="180" bindtouchstart="onChartTouchStart" bindtouchmove="onChartTouchMove" bindtouchend="onChartTouchEnd" bindtouchcancel="onChartTouchEnd"></canvas>
+      </view>
+
+
+
+    </view>
+  </block>
+</view>

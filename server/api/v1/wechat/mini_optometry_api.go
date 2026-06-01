@@ -1,19 +1,23 @@
 package wechat
 
 import (
+	"errors"
 	"strconv"
 
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/common/response"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
+	"gorm.io/gorm"
 
 	optometryModel "github.com/flipped-aurora/gin-vue-admin/server/model/optometry"
+	storeModel "github.com/flipped-aurora/gin-vue-admin/server/model/store"
+	wechatModel "github.com/flipped-aurora/gin-vue-admin/server/model/wechat"
 )
 
 type MiniOptometryApi struct{}
 
-// GetOptometryListByOpenid 获取用户验光记录列表
+// GetOptometryListByOpenid 获取用户验光记录列表（关联链：openid → phone → customerId）
 // @Tags      MiniOptometry
 // @Summary   获取用户验光记录列表
 // @Produce   application/json
@@ -26,8 +30,46 @@ func (a *MiniOptometryApi) GetOptometryListByOpenid(c *gin.Context) {
 		response.FailWithMessage("参数错误", c)
 		return
 	}
+
+	// 1. 通过 openid 找到微信用户
+	var wxUser wechatModel.WxUser
+	if err := global.GVA_DB.Where("open_id = ? AND del_flag = '0'", openid).First(&wxUser).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			response.OkWithDetailed([]optometryModel.OptometryRecord{}, "未绑定用户", c)
+			return
+		}
+		global.GVA_LOG.Error("查询微信用户失败", zap.Error(err))
+		response.FailWithMessage("获取失败:"+err.Error(), c)
+		return
+	}
+
+	// 2. 通过手机号找到门店用户
+	phone := ""
+	if wxUser.Phone != nil {
+		phone = *wxUser.Phone
+	}
+	if phone == "" {
+		response.OkWithDetailed([]optometryModel.OptometryRecord{}, "未绑定手机号", c)
+		return
+	}
+
+	var mxUser storeModel.MxUser
+	if err := global.GVA_DB.Where("phone_number = ? AND is_delete = 0", phone).First(&mxUser).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			response.OkWithDetailed([]optometryModel.OptometryRecord{}, "无对应门店客户", c)
+			return
+		}
+		global.GVA_LOG.Error("查询门店用户失败", zap.Error(err))
+		response.FailWithMessage("获取失败:"+err.Error(), c)
+		return
+	}
+
+	// 3. 通过客户ID查询验光记录
 	var list []optometryModel.OptometryRecord
-	err := global.GVA_DB.Where("open_id = ? AND is_delete = ?", openid, 0).Order("create_time DESC").Find(&list).Error
+	err := global.GVA_DB.
+		Where("customer_id = ? AND is_delete = 0", mxUser.UserId).
+		Order("create_time DESC").
+		Find(&list).Error
 	if err != nil {
 		global.GVA_LOG.Error("获取验光记录列表失败", zap.Error(err))
 		response.FailWithMessage("获取失败:"+err.Error(), c)

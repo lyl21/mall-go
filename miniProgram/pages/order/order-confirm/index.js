@@ -79,7 +79,7 @@ Page({
         isDefault: '1'
     })
       .then(res => {
-        let records = res.data.records
+        let records = res.data.list || []
         if (records && records.length > 0){
           this.setData({
             userAddress: records[0]

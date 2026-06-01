@@ -68,7 +68,7 @@ Page({
       descs: 'sale_num'
     })
       .then(res => {
-        let goodsList = res.data.records
+        let goodsList = res.data.list || []
         this.setData({
           goodsList: goodsList
         })

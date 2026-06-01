@@ -61,11 +61,16 @@ Page({
   orderPage() {
     app.api.orderPage(Object.assign(
       {},
-      this.data.page,
+      {
+        page: this.data.page.current,
+        pageSize: this.data.page.size,
+        ascs: this.data.page.ascs,
+        descs: this.data.page.descs
+      },
       util.filterForm(this.data.parameter)
     ))
       .then(res => {
-        let orderList = res.data.records
+        let orderList = res.data.list || []
         this.setData({
           orderList: [...this.data.orderList, ...orderList]
         })

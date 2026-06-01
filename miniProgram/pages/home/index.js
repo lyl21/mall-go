@@ -60,7 +60,7 @@ Page({
       descs: 'create_time'
     })
       .then(res => {
-        let goodsListNew = res.data.records
+        let goodsListNew = res.data.list || []
         this.setData({
           goodsListNew: goodsListNew
         })
@@ -75,7 +75,7 @@ Page({
       descs: 'sale_num'
     })
       .then(res => {
-        let goodsListHot = res.data.records
+        let goodsListHot = res.data.list || []
         this.setData({
           goodsListHot: goodsListHot
         })
@@ -84,7 +84,7 @@ Page({
   goodsPage(e) {
     app.api.goodsPage(this.data.page)
       .then(res => {
-        let goodsList = res.data.records
+        let goodsList = res.data.list || []
         this.setData({
           goodsList: [...this.data.goodsList, ...goodsList]
         })

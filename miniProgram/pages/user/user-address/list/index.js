@@ -31,7 +31,7 @@ Page({
   userAddressPage() {
     app.api.userAddressPage(this.data.page)
       .then(res => {
-        let userAddress = res.data.records
+        let userAddress = res.data.list || []
         this.setData({
           userAddress: userAddress,
           loadmore: false

@@ -66,7 +66,7 @@ Page({
       util.filterForm(this.data.parameter)
     ))
       .then(res => {
-        let goodsList = res.data.records
+        let goodsList = res.data.list || []
         this.setData({
           goodsList: [...this.data.goodsList, ...goodsList]
         })

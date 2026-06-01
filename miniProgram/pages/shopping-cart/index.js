@@ -59,7 +59,7 @@ Page({
         let shoppingCartData = []
         //过滤出失效商品
         let shoppingCartDataInvalid = []
-        res.data.records.forEach(function (shoppingCart, index) {
+        (res.data.list || []).forEach(function (shoppingCart, index) {
           if (!shoppingCart.goodsSpu || shoppingCart.goodsSpu.shelf == '0'){//下架或删除了
             shoppingCartDataInvalid.push(shoppingCart)
           }else{
@@ -86,7 +86,7 @@ Page({
       descs: 'create_time'
     })
       .then(res => {
-        let goodsListRecom = res.data.records
+        let goodsListRecom = res.data.list || []
         this.setData({
           goodsListRecom: goodsListRecom
         })

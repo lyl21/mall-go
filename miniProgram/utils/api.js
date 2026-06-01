@@ -15,7 +15,8 @@ const request = (url, method, data, showLoading) => {
       data: data,
       header: {
         'app-id': wx.getAccountInfoSync().miniProgram.appId,
-        'Authorization': getApp().globalData.thirdSession ? 'Bearer ' + getApp().globalData.thirdSession : ''
+        'Authorization': getApp().globalData.thirdSession ? 'Bearer ' + getApp().globalData.thirdSession : '',
+        'Content-Type': 'application/json'
       },
       success(res) {
         if (res.statusCode == 200) {

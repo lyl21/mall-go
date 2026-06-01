@@ -62,9 +62,9 @@ Page({
   goodsPage() {
     app.api.goodsPage({
       searchCount: false,
-      current: 1,
-      size: 10,
-      ascs: '',//升序字段
+      page: 1,
+      pageSize: 10,
+      ascs: '',
       descs: 'sale_num'
     })
       .then(res => {

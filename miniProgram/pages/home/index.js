@@ -55,8 +55,8 @@ Page({
   goodsNew() {
     app.api.goodsPage({
       searchCount: false,
-      current: 1,
-      size: 5,
+      page: 1,
+      pageSize: 5,
       descs: 'create_time'
     })
       .then(res => {
@@ -70,8 +70,8 @@ Page({
   goodsHot() {
     app.api.goodsPage({
       searchCount: false,
-      current: 1,
-      size: 5,
+      page: 1,
+      pageSize: 5,
       descs: 'sale_num'
     })
       .then(res => {
@@ -82,7 +82,12 @@ Page({
       })
   },
   goodsPage(e) {
-    app.api.goodsPage(this.data.page)
+    app.api.goodsPage({
+      page: this.data.page.current,
+      pageSize: this.data.page.size,
+      ascs: this.data.page.ascs,
+      descs: this.data.page.descs
+    })
       .then(res => {
         let goodsList = res.data.list || []
         this.setData({

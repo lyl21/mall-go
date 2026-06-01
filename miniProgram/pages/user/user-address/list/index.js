@@ -29,7 +29,10 @@ Page({
       })
   },
   userAddressPage() {
-    app.api.userAddressPage(this.data.page)
+    app.api.userAddressPage({
+      page: this.data.page.current,
+      pageSize: this.data.page.size
+    })
       .then(res => {
         let userAddress = res.data.list || []
         this.setData({

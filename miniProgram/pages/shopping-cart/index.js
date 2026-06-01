@@ -47,7 +47,11 @@ Page({
   },
   //加载数据
   shoppingCartPage(){
-    app.api.shoppingCartPage(this.data.page)
+    app.api.shoppingCartPage({
+      page: this.data.page.current,
+      pageSize: this.data.page.size,
+      descs: this.data.page.descs
+    })
       .then(res => {
         //更新购物车数量
         app.globalData.shoppingCartCount = res.data.total + ''
@@ -81,8 +85,8 @@ Page({
   goodsRecom() {
     app.api.goodsPage({
       searchCount: false,
-      current: 1,
-      size: 4,
+      page: 1,
+      pageSize: 4,
       descs: 'create_time'
     })
       .then(res => {

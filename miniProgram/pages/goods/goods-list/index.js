@@ -62,7 +62,12 @@ Page({
   goodsPage() {
     app.api.goodsPage(Object.assign(
       {},
-      this.data.page,
+      {
+        page: this.data.page.current,
+        pageSize: this.data.page.size,
+        ascs: this.data.page.ascs,
+        descs: this.data.page.descs
+      },
       util.filterForm(this.data.parameter)
     ))
       .then(res => {

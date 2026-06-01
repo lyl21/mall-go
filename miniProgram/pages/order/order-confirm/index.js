@@ -74,8 +74,8 @@ Page({
     app.api.userAddressPage(
       {
         searchCount: false,
-        current: 1,
-        size: 1,
+        page: 1,
+        pageSize: 1,
         isDefault: '1'
     })
       .then(res => {

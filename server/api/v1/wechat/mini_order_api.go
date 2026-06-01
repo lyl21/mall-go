@@ -513,3 +513,32 @@ func (a *MiniOrderApi) OrderCountAll(c *gin.Context) {
 
 	response.OkWithDetailed(results, "获取成功", c)
 }
+
+// DeleteOrder 删除订单（软删除，设置 del_flag = 1）
+// @Tags      MiniOrder
+// @Summary   小程序删除订单
+// @Produce   application/json
+// @Param     id   path      string  true  "订单ID"
+// @Success   200  {object}  response.Response{msg=string}  "删除成功"
+// @Router    /mini/orderinfo/{id} [delete]
+func (a *MiniOrderApi) DeleteOrder(c *gin.Context) {
+	id := c.Param("id")
+	if id == "" {
+		response.FailWithMessage("订单ID不能为空", c)
+		return
+	}
+
+	_, err := validateOrderOwner(c, id)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+
+	if err := global.GVA_DB.Model(&mall.OrderInfo{}).Where("id = ?", id).Update("del_flag", "1").Error; err != nil {
+		global.GVA_LOG.Error("删除订单失败", zap.Error(err))
+		response.FailWithMessage("删除失败", c)
+		return
+	}
+
+	response.OkWithMessage("删除成功", c)
+}

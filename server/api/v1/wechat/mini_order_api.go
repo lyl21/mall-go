@@ -478,3 +478,38 @@ func (a *MiniOrderApi) ReceiveOrder(c *gin.Context) {
 func generateOrderNo() string {
 	return utils.GenerateOrderNo()
 }
+
+// OrderCountAll 获取各状态订单数量
+// @Tags      MiniOrder
+// @Summary   小程序订单状态数量统计
+// @Produce   application/json
+// @Success   200  {object}  response.Response{data=[]map[string]interface{}}  "获取成功"
+// @Router    /mini/orderinfo/countAll [get]
+func (a *MiniOrderApi) OrderCountAll(c *gin.Context) {
+	wxUserId := c.GetUint("wxUserId")
+	if wxUserId == 0 {
+		response.FailWithMessage("获取用户信息失败", c)
+		return
+	}
+
+	// 统计各状态订单数量
+	type StatusCount struct {
+		Status string `json:"status"`
+		Count  int64  `json:"count"`
+	}
+	var results []StatusCount
+
+	err := global.GVA_DB.Model(&mall.OrderInfo{}).
+		Select("COALESCE(status, '0') as status, COUNT(*) as count").
+		Where("user_id = ? AND del_flag = '0'", wxUserId).
+		Group("COALESCE(status, '0')").
+		Scan(&results).Error
+
+	if err != nil {
+		global.GVA_LOG.Error("统计订单数量失败", zap.Error(err))
+		response.FailWithMessage("获取失败", c)
+		return
+	}
+
+	response.OkWithDetailed(results, "获取成功", c)
+}

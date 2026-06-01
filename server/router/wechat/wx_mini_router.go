@@ -62,6 +62,7 @@ func (r *WxMiniRouter) InitWxMiniRouter(publicGroup *gin.RouterGroup) {
 		maGroup.PUT("useraddress", miniAddressApi.UpdateAddress)
 		maGroup.DELETE("useraddress/:id", miniAddressApi.DeleteAddress)
 		// 订单
+		maGroup.GET("orderinfo/countAll", miniOrderApi.OrderCountAll)
 		maGroup.GET("orderinfo/page", miniOrderApi.GetOrderPage)
 		maGroup.GET("orderinfo/:id", miniOrderApi.GetOrderById)
 		maGroup.POST("orderinfo", miniOrderApi.CreateOrder)
@@ -70,6 +71,6 @@ func (r *WxMiniRouter) InitWxMiniRouter(publicGroup *gin.RouterGroup) {
 		// 支付
 		maGroup.POST("orderinfo/unifiedOrder", miniPayApi.UnifiedOrder)
 		maGroup.POST("orderinfo/refunds", miniPayApi.Refund)
-	
+
 	}
 }

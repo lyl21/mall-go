@@ -14,7 +14,12 @@ jobs:
           host: ${{ secrets.SERVER_SSH_HOST }}
           port: ${{ secrets.SERVER_SSH_PORT }}
           key: ${{ secrets.SERVER_SSH_KEY }}
+          script_stop: true
+          debug: true
+          command_timeout: 10m
+          envs: GITHUB_SHA
           script: |
+            set -e
             cd /home/XM/mall-go
             git pull origin main
             docker restart xm-server xm-web

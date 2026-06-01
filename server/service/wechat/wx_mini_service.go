@@ -89,6 +89,10 @@ func (s *WxMiniService) getMiniProgram() (*miniprogram.MiniProgram, error) {
 		AppSecret: appSecret,
 	}
 	miniProgramInst = wc.GetMiniProgram(cfg)
+	if miniProgramInst == nil {
+		miniProgramErr = errors.New("微信小程序 SDK 初始化失败")
+		return nil, miniProgramErr
+	}
 	miniProgramErr = nil
 	return miniProgramInst, nil
 }
@@ -102,6 +106,13 @@ func (s *WxMiniService) MiniLogin(code string) (result MiniLoginResult, err erro
 	if err != nil {
 		return
 	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("微信小程序服务异常: %v", r)
+			global.GVA_LOG.Error("MiniLogin panic recovered", zap.Any("panic", r))
+		}
+	}()
 
 	auth := mp.GetAuth()
 	session, err := auth.Code2Session(code)

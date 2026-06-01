@@ -26,7 +26,7 @@ func (a *MiniWxUserApi) WxUserLogin(c *gin.Context) {
 		Code string `json:"code" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.FailWithMessage("参数错误: "+err.Error(), c)
+		response.FailWithBadRequest("参数错误: "+err.Error(), c)
 		return
 	}
 	result, err := wxMiniService.MiniLogin(req.Code)
@@ -79,7 +79,7 @@ func (a *MiniWxUserApi) WxUserGet(c *gin.Context) {
 func (a *MiniWxUserApi) WxUserSave(c *gin.Context) {
 	var req wechat.WxUser
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.FailWithMessage("参数错误: "+err.Error(), c)
+		response.FailWithBadRequest("参数错误: "+err.Error(), c)
 		return
 	}
 

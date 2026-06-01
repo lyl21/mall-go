@@ -17,7 +17,7 @@ const (
 	UNAUTHORIZED = 401 // 未授权
 	FORBIDDEN    = 403 // 访问受限，授权过期
 	NOT_FOUND    = 404 // 资源，服务未找到
-	ERROR        = 7   // 系统内部错误
+	ERROR        = 500 // 系统内部错误
 	WARN         = 601 // 系统警告消息
 )
 

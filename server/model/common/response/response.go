@@ -13,7 +13,7 @@ type Response struct {
 }
 
 const (
-	ERROR   = 7
+	ERROR   = 500
 	SUCCESS = 0
 )
 

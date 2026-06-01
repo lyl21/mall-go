@@ -1,7 +1,7 @@
 FROM alpine:latest
 
 LABEL MAINTAINER="SliverHorn@sliver_horn@qq.com"
-# 设置时区
+
 ENV TZ=Asia/Shanghai
 RUN apk update && apk add --no-cache tzdata openntpd \
     && ln -sf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone

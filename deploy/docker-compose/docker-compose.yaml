@@ -33,6 +33,7 @@ services:
     build:
       context: ../../server
       dockerfile: ./Dockerfile
+    image: xm-server
     container_name: xm-server
     restart: always
     ports:

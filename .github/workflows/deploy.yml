@@ -8,18 +8,20 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Add server host key
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -p ${{ secrets.SERVER_SSH_PORT }} -H ${{ secrets.SERVER_SSH_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
       - name: SSH 部署：拉取代码并重启容器
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.SERVER_SSH_HOST }}
           port: ${{ secrets.SERVER_SSH_PORT }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          script_stop: true
-          debug: true
           command_timeout: 10m
-          envs: GITHUB_SHA
           script: |
-            set -e
             cd /home/XM/mall-go
             git pull origin main
             docker restart xm-server xm-web

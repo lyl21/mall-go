@@ -20,7 +20,7 @@ const request = (url, method, data, showLoading) => {
       },
       success(res) {
         if (res.statusCode == 200) {
-          if (res.data.code != 200) {
+          if (res.data.code != 0) {
             console.log(res.data)
             wx.showModal({
               title: '提示',
@@ -29,7 +29,7 @@ const request = (url, method, data, showLoading) => {
                 
               },
               complete(){
-                if(res.data.code == 60001){
+                if(res.data.code == 401){
                   //session过期，则清除过期session，并重新加载当前页
                   getApp().globalData.thirdSession = null
                   wx.reLaunch({

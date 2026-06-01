@@ -12,7 +12,7 @@ import (
 // MiniMallApi 小程序商城API
 type MiniMallApi struct{}
 
-// GetGoodsCategoryTree 获取商品分类树
+// GetGoodsCategoryTree 获取商品分类树（返回树形结构，含 children）
 // @Tags      MiniMall
 // @Summary   小程序获取商品分类树
 // @Produce   application/json
@@ -26,7 +26,24 @@ func (a *MiniMallApi) GetGoodsCategoryTree(c *gin.Context) {
 		response.FailWithMessage("获取失败", c)
 		return
 	}
-	response.OkWithData(list, c)
+	tree := buildCategoryTree(list, "0")
+	response.OkWithData(tree, c)
+}
+
+// buildCategoryTree 将平铺分类列表组装为树形结构
+func buildCategoryTree(categories []mall.GoodsCategory, parentId string) []mall.GoodsCategory {
+	var tree []mall.GoodsCategory
+	for _, cat := range categories {
+		pid := "0"
+		if cat.ParentId != nil {
+			pid = *cat.ParentId
+		}
+		if pid == parentId {
+			cat.Children = buildCategoryTree(categories, cat.Id)
+			tree = append(tree, cat)
+		}
+	}
+	return tree
 }
 
 // GetGoodsSpuPage 分页查询商品列表

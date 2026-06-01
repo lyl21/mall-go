@@ -14,6 +14,7 @@ type GoodsCategory struct {
 	CreateTime  common.DateTime  `json:"createTime" gorm:"column:create_time;autoCreateTime;comment:创建时间"`
 	UpdateTime  common.DateTime  `json:"updateTime" gorm:"column:update_time;autoUpdateTime;comment:最后更新时间"`
 	DelFlag     string           `json:"delFlag" gorm:"column:del_flag;type:char(2);default:'0';comment:逻辑删除标记"`
+	Children    []GoodsCategory  `json:"children" gorm:"-"`
 }
 
 func (GoodsCategory) TableName() string { return "goods_category" }

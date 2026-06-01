@@ -74,8 +74,8 @@ App({
           if (res.code) {
             this.api.login({ code: res.code }).then(res => {
               wx.hideLoading()
-              const wxUser = res.data
-              this.globalData.thirdSession = wxUser.sessionKey
+              const wxUser = res.data.wxUser || res.data
+              this.globalData.thirdSession = res.data.token
               this.globalData.wxUser = wxUser
               resolve('success')
               this.shoppingCartCount()

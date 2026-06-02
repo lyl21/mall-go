@@ -13,7 +13,7 @@ type InstallingPackage struct {
 	UpdateBy     string          `json:"updateBy" gorm:"column:update_by;type:varchar(64);comment:更新者"`
 	Remark       string          `json:"remark" gorm:"column:remark;type:varchar(500);comment:备注"`
 	App          string          `json:"app" gorm:"column:app;type:varchar(100);comment:应用名称"`
-	VersionCode  int             `json:"versionCode" gorm:"column:version_code;type:int;not null;comment:版本号(必填,用于版本比较)"`
+	VersionCode  int             `json:"versionCode" gorm:"column:version_code;type:int;not null;default:1;comment:版本号(必填,用于版本比较)"`
 	VersionName  string          `json:"versionName" gorm:"column:version_name;type:varchar(50);comment:应用版本名称(可选,如1.0.0)"`
 	Url          string          `json:"url" gorm:"column:url;type:varchar(500);comment:应用下载地址"`
 	PackageName  string          `json:"packageName" gorm:"column:package_name;type:varchar(100);comment:包名"`

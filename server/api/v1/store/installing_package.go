@@ -29,6 +29,11 @@ func (i *InstallingPackageApi) CreateInstallingPackage(c *gin.Context) {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
+	// versionCode 必填校验
+	if pkg.VersionCode <= 0 {
+		response.FailWithMessage("版本号(versionCode)为必填项且必须大于0", c)
+		return
+	}
 	err = installingPkgService.CreateInstallingPackage(pkg)
 	if err != nil {
 		global.GVA_LOG.Error("创建失败!", zap.Error(err))

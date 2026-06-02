@@ -12,6 +12,14 @@ import (
 
 func bizModel() error {
 	db := global.GVA_DB
+
+	// 迁移前预处理: installing_packages表version_code列已有NULL值时设为1, 避免NOT NULL约束报Data truncated
+	if db.Migrator().HasTable(&storeModel.InstallingPackage{}) {
+		if db.Migrator().HasColumn(&storeModel.InstallingPackage{}, "version_code") {
+			db.Exec("UPDATE installing_packages SET version_code = 1 WHERE version_code IS NULL")
+		}
+	}
+
 	err := db.AutoMigrate(
 		// 门店管理
 		&storeModel.MxStore{},

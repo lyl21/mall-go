@@ -19,6 +19,17 @@ NC='\033[0m'
 TARGET="${1:-all}"
 
 # ============================================================
+# 清理Docker悬空资源(旧镜像/构建缓存),避免每次构建磁盘递减
+# ============================================================
+cleanup_docker() {
+  echo -e "${YELLOW}=== 清理Docker悬空资源 ===${NC}"
+  docker image prune -f 2>/dev/null || true
+  docker builder prune -f --filter "until=24h" 2>/dev/null || true
+  echo -e "${GREEN}清理完成${NC}"
+  echo ""
+}
+
+# ============================================================
 # 构建 server: 宿主机编译 Go 二进制 → 复制到镜像 → 启动容器
 # ============================================================
 build_server() {
@@ -72,9 +83,13 @@ case "$TARGET" in
     echo ""
     build_web
     ;;
+  clean)
+    cleanup_docker
+    ;;
   *)
-    echo "用法: $0 [server|web|all]"
+    echo "用法: $0 [server|web|all|clean]"
     echo "  不带参数默认构建全部"
+    echo "  clean  清理Docker悬空资源"
     exit 1
     ;;
 esac

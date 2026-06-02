@@ -1,4 +1,3 @@
-import legacyPlugin from '@vitejs/plugin-legacy'
 import { viteLogo } from './src/core/config'
 import * as path from 'path'
 import { loadEnv } from 'vite'
@@ -76,25 +75,24 @@ export default ({ mode }) => {
       }
     },
     build: {
-      minify: 'esbuild', // esbuild 比 terser 快 20 倍以上
-      manifest: false, // 是否产出manifest.json
-      sourcemap: false, // 是否产出sourcemap.json
-      outDir: outDir, // 产出目录
-      // terserOptions 已移除，使用 esbuild 压缩无需额外配置
+      // esbuild target: 降级ES2020+语法(如???.),避免旧浏览器白屏
+      // 比legacyPlugin(Babel)快20倍以上,319s→~15s
+      // es2017包含解构/async等,但不包含??和?.,esbuild可正确降级
+      target: 'es2017',
+      minify: 'esbuild',
+      manifest: false,
+      sourcemap: false,
+      outDir: outDir,
       rollupOptions
     },
-    esbuild,
+    // esbuild配置: 移除console和debugger(替代terserOptions)
+    esbuild: {
+      drop: ['console', 'debugger']
+    },
     optimizeDeps,
     plugins: [
       env.VITE_POSITION === 'open' &&
       vueDevTools({ launchEditor: env.VITE_EDITOR }),
-      // legacyPlugin: 降级ES2020+语法(如???.),避免旧浏览器白屏
-      legacyPlugin({
-        targets: ['Chrome >= 60', 'Safari >= 10.1', 'iOS >= 10.3', 'Firefox >= 54', 'Edge >= 15'],
-        // 不生成polyfill,仅做语法降级,大幅减少构建时间和产物体积
-        modernPolyfills: false,
-        renderModernChunks: true
-      }),
       vuePlugin(),
       svgBuilder(['./src/plugin/', './src/assets/icons/'], base, outDir, 'assets', mode),
       VueFilePathPlugin('./src/pathInfo.json'),

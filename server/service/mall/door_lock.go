@@ -228,14 +228,14 @@ func (s *DoorLockService) doorRemote(doorGuid string) (string, error) {
 	cfg := global.GVA_CONFIG.DoorLock
 
 	// 优先从 sys_params 表读取，不存在则用 config.yaml 的默认值
-	baseURL := utils.GetParamValue("door_lock_base_url", cfg.BaseURL)
+	baseURL := utils.GetParamValue("door.lock.base.url", cfg.BaseURL)
 	if baseURL == "" {
 		baseURL = "https://yun.andudu.net/dist"
 	}
-	username := utils.GetParamValue("door_lock_username", cfg.Username)
-	password := utils.GetParamValue("door_lock_password", cfg.Password)
-	yardSn := utils.GetParamValue("door_lock_yard_sn", cfg.YardSn)
-	gyscode := utils.GetParamValue("door_lock_gyscode", cfg.Gyscode)
+	username := utils.GetParamValue("door.lock.username", cfg.Username)
+	password := utils.GetParamValue("door.lock.password", cfg.Password)
+	yardSn := utils.GetParamValue("door.lock.yard.sn", cfg.YardSn)
+	gyscode := utils.GetParamValue("door.lock.gyscode", cfg.Gyscode)
 
 	// 1. 登录获取 token
 	loginURL := baseURL + "/sess/check-login"

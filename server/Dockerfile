@@ -10,7 +10,8 @@ WORKDIR /go/src/github.com/flipped-aurora/gin-vue-admin/server
 
 COPY server ./
 COPY resource ./resource/
-COPY config.docker.yaml ./
+# 配置文件通过 docker-compose volume 挂载，不再内置到镜像中
+# COPY config.docker.yaml ./
 
 EXPOSE 8888
 ENTRYPOINT ./server -c config.docker.yaml

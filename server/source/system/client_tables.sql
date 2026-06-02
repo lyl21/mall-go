@@ -6,11 +6,13 @@ CREATE TABLE IF NOT EXISTS `installing_packages` (
   `create_by` varchar(64) DEFAULT '' COMMENT '创建者',
   `update_by` varchar(64) DEFAULT '' COMMENT '更新者',
   `remark` varchar(500) DEFAULT '' COMMENT '备注',
-  `app_name` varchar(100) DEFAULT '' COMMENT '应用名称',
-  `app_version` varchar(50) DEFAULT '' COMMENT '应用版本',
-  `app_url` varchar(500) DEFAULT '' COMMENT '应用下载地址',
-  `force_update` int(1) DEFAULT '0' COMMENT '是否强制更新0否1是',
-  `update_content` text COMMENT '更新内容',
+  `app` varchar(100) DEFAULT '' COMMENT '应用名称',
+  `version_code` int NOT NULL DEFAULT '1' COMMENT '版本号(必填,用于版本比较)',
+  `version_name` varchar(50) DEFAULT '' COMMENT '应用版本名称(可选,如1.0.0)',
+  `url` varchar(500) DEFAULT '' COMMENT '应用下载地址',
+  `package_name` varchar(100) DEFAULT '' COMMENT '包名',
+  `forced_updating` int(1) DEFAULT '0' COMMENT '是否强制更新0否1是',
+  `note` text COMMENT '更新内容',
   `package_type` int(1) DEFAULT '1' COMMENT '包类型1APP2键盘3验光仪4手动验光仪',
   `status` int(1) DEFAULT '1' COMMENT '状态0禁用1启用',
   PRIMARY KEY (`installing_id`)
@@ -26,8 +28,8 @@ CREATE TABLE IF NOT EXISTS `error_report_log` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='错误报告日志表';
 
 -- 插入默认安装包数据
-INSERT INTO `installing_packages` (`installing_id`, `app_name`, `app_version`, `app_url`, `force_update`, `package_type`, `status`) VALUES
-(1, '牛头APP', '1.0.0', '', 0, 1, 1),
-(2, '键盘APP', '1.0.0', '', 0, 2, 1),
-(3, '验光仪APP', '1.0.0', '', 0, 3, 1),
-(4, '手动验光仪APP', '1.0.0', '', 0, 4, 1);
+INSERT INTO `installing_packages` (`installing_id`, `app`, `version_code`, `version_name`, `url`, `forced_updating`, `package_type`, `status`) VALUES
+(1, '牛头APP', 1, '1.0.0', '', 0, 1, 1),
+(2, '键盘APP', 1, '1.0.0', '', 0, 2, 1),
+(3, '验光仪APP', 1, '1.0.0', '', 0, 3, 1),
+(4, '手动验光仪APP', 1, '1.0.0', '', 0, 4, 1);

@@ -18,6 +18,7 @@
       <el-table :data="tableData" row-key="installingId">
         <el-table-column align="left" label="ID" prop="installingId" min-width="60" />
         <el-table-column align="left" label="应用" prop="app" min-width="100" />
+        <el-table-column align="left" label="版本号" prop="versionCode" min-width="80" />
         <el-table-column align="left" label="版本名称" prop="versionName" min-width="120" />
         <el-table-column align="left" label="文件地址" prop="url" min-width="220" show-overflow-tooltip />
         <el-table-column align="left" label="包名" prop="packageName" min-width="200" />
@@ -42,7 +43,8 @@
     <el-dialog v-model="dialogVisible" :title="dialogTitle" width="500px" destroy-on-close>
       <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="应用" prop="app"><el-input v-model="form.app" placeholder="如: Android App, iOS App" /></el-form-item>
-        <el-form-item label="版本名称" prop="versionName"><el-input v-model="form.versionName" placeholder="如: 1.0.0" /></el-form-item>
+        <el-form-item label="版本号" prop="versionCode"><el-input-number v-model="form.versionCode" :min="1" controls-position="right" placeholder="如: 1" style="width: 100%" /></el-form-item>
+        <el-form-item label="版本名称" prop="versionName"><el-input v-model="form.versionName" placeholder="如: 1.0.0（可选）" /></el-form-item>
         <el-form-item label="安装包" prop="url">
           <SelectFile
             v-model="uploadFiles"
@@ -86,7 +88,7 @@ const formRef = ref(null)
 const form = ref({})
 const uploadFiles = ref([])
 const rules = reactive({
-  versionName: [{ required: true, message: '版本名称', trigger: 'blur' }],
+  versionCode: [{ required: true, message: '请输入版本号', trigger: 'blur' }],
   url: [{ required: true, message: '请上传安装包', trigger: 'change' }]
 })
 
@@ -113,7 +115,7 @@ const handleUploadSuccess = (res) => {
 
 const openDialog = (type, row) => {
   dialogTitle.value = type === 'add' ? '新增安装包' : '编辑安装包'
-  form.value = type === 'add' ? { forceUpdate: 0 } : { ...row }
+  form.value = type === 'add' ? { forceUpdate: 0, versionCode: 1 } : { ...row }
   uploadFiles.value = form.value.url ? [{ name: form.value.packageName || '已上传文件', url: form.value.url }] : []
   dialogVisible.value = true
 }
@@ -121,13 +123,13 @@ const openDialog = (type, row) => {
 const submitForm = async () => {
   await formRef.value.validate(async (valid) => {
     if (!valid) return
-    // versionCode 后端是可选指针，这里不强制要求输入，默认保持空
     const payload = {
       installingId: form.value.installingId,
       packageName: form.value.packageName,
       app: form.value.app,
       url: form.value.url,
-      versionName: form.value.versionName,
+      versionCode: form.value.versionCode,
+      versionName: form.value.versionName || '',
       note: form.value.note || '',
       forceUpdate: form.value.forceUpdate ?? 0
     }

@@ -28,6 +28,17 @@ import (
 // MiniPayApi 小程序支付API
 type MiniPayApi struct{}
 
+// wechatPayConfig 从 sys_params 优先读取微信支付配置，不存在则用 config.yaml 默认值
+func wechatPayConfig() (appId, mchId, apiKey, notifyUrl, apiV3Key string) {
+	cfg := global.GVA_CONFIG.Wechat
+	appId = utils.GetParamValue("wechat_pay_mini_app_id", cfg.MiniAppID)
+	mchId = utils.GetParamValue("wechat_pay_mch_id", cfg.MchID)
+	apiKey = utils.GetParamValue("wechat_pay_api_key", cfg.APIKey)
+	notifyUrl = utils.GetParamValue("wechat_pay_notify_url", cfg.NotifyURL)
+	apiV3Key = utils.GetParamValue("wechat_pay_apiv3_key", cfg.MchAPIv3Key)
+	return
+}
+
 // UnifiedOrderRequest 统一下单请求
 type UnifiedOrderRequest struct {
 	OrderId string `json:"orderId" binding:"required"`
@@ -121,10 +132,7 @@ func (a *MiniPayApi) UnifiedOrder(c *gin.Context) {
 
 // unifiedOrderV2 V2 支付降级方案（保留 gopay 兼容）
 func (a *MiniPayApi) unifiedOrderV2(c *gin.Context, order *mall.OrderInfo, openId string) {
-	appId := global.GVA_CONFIG.Wechat.MiniAppID
-	mchId := global.GVA_CONFIG.Wechat.MchID
-	apiKey := global.GVA_CONFIG.Wechat.APIKey
-	notifyUrl := global.GVA_CONFIG.Wechat.NotifyURL
+	appId, mchId, apiKey, notifyUrl, _ := wechatPayConfig()
 	if notifyUrl == "" {
 		notifyUrl = "https://" + c.Request.Host + "/weixin/api/ma/orderinfo/notify-order"
 	}
@@ -216,11 +224,12 @@ func (a *MiniPayApi) payNotifyV3(c *gin.Context) {
 	}
 
 	// AES-256-GCM 解密
+	_, _, _, _, apiV3Key := wechatPayConfig()
 	plainText, err := aesGCMDecrypt(
 		notify.Resource.Ciphertext,
 		notify.Resource.Nonce,
 		notify.Resource.AssociatedData,
-		global.GVA_CONFIG.Wechat.MchAPIv3Key,
+		apiV3Key,
 	)
 	if err != nil {
 		global.GVA_LOG.Error("V3回调-解密失败", zap.Error(err))
@@ -298,7 +307,7 @@ func (a *MiniPayApi) payNotifyV2(c *gin.Context) {
 		return
 	}
 
-	apiKey := global.GVA_CONFIG.Wechat.APIKey
+	_, _, apiKey, _, _ := wechatPayConfig()
 	ok, err := wechat.VerifySign(apiKey, wechat.SignType_MD5, notifyReq)
 	if err != nil || !ok {
 		global.GVA_LOG.Error("验证支付回调签名失败", zap.Error(err))
@@ -483,9 +492,7 @@ func (a *MiniPayApi) refundV3(order *mall.OrderInfo, req RefundRequest) bool {
 
 // refundV2 V2 退款（go-pay 兼容）
 func (a *MiniPayApi) refundV2(c *gin.Context, order *mall.OrderInfo, req RefundRequest) bool {
-	appId := global.GVA_CONFIG.Wechat.MiniAppID
-	mchId := global.GVA_CONFIG.Wechat.MchID
-	apiKey := global.GVA_CONFIG.Wechat.APIKey
+	appId, mchId, apiKey, _, _ := wechatPayConfig()
 
 	client := wechat.NewClient(appId, mchId, apiKey, false)
 
@@ -541,7 +548,7 @@ func (a *MiniPayApi) RefundNotify(c *gin.Context) {
 		return
 	}
 
-	apiKey := global.GVA_CONFIG.Wechat.APIKey
+	_, _, apiKey, _, _ := wechatPayConfig()
 	ok, err := wechat.VerifySign(apiKey, wechat.SignType_MD5, notifyReq)
 	if err != nil || !ok {
 		global.GVA_LOG.Error("验证退款回调签名失败", zap.Error(err))

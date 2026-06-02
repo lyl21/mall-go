@@ -47,5 +47,6 @@ func initializeSystem() {
 	initialize.SetupHandlers() // 注册全局函数
 	if global.GVA_DB != nil {
 		initialize.RegisterTables() // 初始化表
+		initialize.InitSysParams()  // 初始化系统参数（微信/门锁/支付/声网）
 	}
 }

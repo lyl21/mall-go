@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>mall-go vs mall/ry 功能对照差异</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 20px; background: #f5f5f5; color: #333; }
+        h1 { color: #1a73e8; border-bottom: 2px solid #1a73e8; padding-bottom: 10px; }
+        h2 { color: #333; margin-top: 30px; border-left: 4px solid #1a73e8; padding-left: 10px; }
+        h3 { color: #555; }
+        table { border-collapse: collapse; width: 100%; margin: 15px 0; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        th, td { border: 1px solid #ddd; padding: 10px 14px; text-align: left; }
+        th { background: #1a73e8; color: white; font-weight: 600; }
+        tr:nth-child(even) { background: #f9f9f9; }
+        .tag-missing { background: #ffebee; color: #c62828; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+        .tag-diff { background: #fff3e0; color: #e65100; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+        .tag-done { background: #e8f5e9; color: #2e7d32; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+        .tag-partial { background: #e3f2fd; color: #1565c0; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+        .update-time { color: #999; font-size: 13px; }
+        code { background: #f0f0f0; padding: 1px 5px; border-radius: 3px; font-size: 13px; }
+        .detail { background: white; padding: 15px; margin: 10px 0; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+
+<h1>mall-go vs mall(Java) / ry(若依) 功能对照差异</h1>
+<p class="update-time">最后更新：2026-06-02（第二轮修复后）</p>
+
+<h2>一、远程开门功能</h2>
+
+<table>
+    <tr>
+        <th>对比项</th>
+        <th>mall (Java原版)</th>
+        <th>mall-go (当前)</th>
+        <th>状态</th>
+    </tr>
+    <tr>
+        <td>接口路径</td>
+        <td><code>POST /door/lock/open</code></td>
+        <td>小程序: <code>POST /mini/remote/door/open</code><br>后台: <code>POST /mall/doorLock/open</code></td>
+        <td><span class="tag-diff">路径不同</span></td>
+    </tr>
+    <tr>
+        <td>请求参数</td>
+        <td><code>{ id: Long, openId: String }</code></td>
+        <td><code>{ id: int64, openId: String }</code></td>
+        <td><span class="tag-done">已统一</span></td>
+    </tr>
+    <tr>
+        <td>开门实现</td>
+        <td>调第三方API <code>yun.andudu.net</code> 远程开门</td>
+        <td>调第三方API <code>yun.andudu.net</code> 远程开门</td>
+        <td><span class="tag-done">已统一</span></td>
+    </tr>
+    <tr>
+        <td>登录获取token</td>
+        <td>用固定账号密码登录 <code>check-login</code> 获取token</td>
+        <td>同左，通过 DoorLockConfig 配置</td>
+        <td><span class="tag-done">已实现</span></td>
+    </tr>
+    <tr>
+        <td>操作记录</td>
+        <td>保存到 <code>door_lock_history</code> 表</td>
+        <td>保存到 <code>door_lock_history</code> 表</td>
+        <td><span class="tag-done">已实现</span></td>
+    </tr>
+    <tr>
+        <td>门锁信息校验</td>
+        <td>校验 yardSn 和 doorGuid</td>
+        <td>校验 yardSn 和 doorGuid</td>
+        <td><span class="tag-done">已实现</span></td>
+    </tr>
+    <tr>
+        <td>同步用户到验光APP</td>
+        <td>调 ry <code>/client/wxUser/add</code></td>
+        <td>直接操作 MxUser/MxStoreMember 表（同库）</td>
+        <td><span class="tag-done">已实现</span></td>
+    </tr>
+    <tr>
+        <td>WebSocket通知门店</td>
+        <td>ry WebSocket 通知门店</td>
+        <td>wsmanager.SendOpenDoorNotify 通知门店</td>
+        <td><span class="tag-done">已实现</span></td>
+    </tr>
+    <tr>
+        <td>手机号校验</td>
+        <td>无校验（可能报空指针）</td>
+        <td>校验手机号，为空则提示"请先授权绑定手机号"</td>
+        <td><span class="tag-done">已增强</span></td>
+    </tr>
+</table>
+
+<div class="detail">
+    <h3>修复说明</h3>
+    <p><b>核心问题</b>：小程序端 <code>RemoteDoorOpen</code> 自行通过 WebSocket 直连设备开门，未调用后台 <code>DoorLockService.OpenDoor</code> 的完整流程。</p>
+    <p><b>修复方案</b>：小程序开门接口改为调用 <code>DoorLockService.OpenDoor</code>，复用后台管理端的完整8步流程：</p>
+    <ol>
+        <li>查询门锁信息</li>
+        <li>校验 yardSn/doorGuid</li>
+        <li>调第三方云平台API远程开门</li>
+        <li>记录操作历史到 door_lock_history</li>
+        <li>查询微信用户信息</li>
+        <li>根据门锁查找门店（MxStore）</li>
+        <li>查找或创建门店用户（MxUser）+ 添加门店成员关系</li>
+        <li>WebSocket通知门店店长/验光师</li>
+    </ol>
+    <p><b>与 mall 原版的差异</b>：mall 原版通过 HTTP 调 ry 的 <code>/client/wxUser/add</code> 接口同步用户，mall-go 直接操作同库的 MxUser/MxStoreMember 表，效果等价但更高效（省去HTTP调用开销）。</p>
+</div>
+
+<h2>二、手机号获取功能</h2>
+
+<table>
+    <tr>
+        <th>对比项</th>
+        <th>mall (Java原版)</th>
+        <th>mall-go (当前)</th>
+        <th>状态</th>
+    </tr>
+    <tr>
+        <td>接口路径</td>
+        <td><code>GET /wxphone?openid=xx&code=xx</code></td>
+        <td><code>GET /mini/phone?openid=xx&code=xx</code></td>
+        <td><span class="tag-diff">路径不同</span></td>
+    </tr>
+    <tr>
+        <td>微信API调用</td>
+        <td>手动HTTP调用：先获取access_token，再调getuserphonenumber</td>
+        <td>使用SDK <code>silenceper/wechat</code> 的 <code>auth.GetPhoneNumber(code)</code></td>
+        <td><span class="tag-done">已实现</span></td>
+    </tr>
+    <tr>
+        <td>手机号存储</td>
+        <td>获取后直接更新 <code>wx_user.phone</code></td>
+        <td>获取后更新 <code>wx_user.phone</code></td>
+        <td><span class="tag-done">已实现</span></td>
+    </tr>
+    <tr>
+        <td>用户不存在处理</td>
+        <td>假设用户已存在，不处理不存在情况</td>
+        <td>自动注册新用户再关联手机号</td>
+        <td><span class="tag-done">已增强</span></td>
+    </tr>
+    <tr>
+        <td>返回格式</td>
+        <td><code>{ code: 200, data: "查询成功" }</code>（不返回手机号值）</td>
+        <td><code>{ code: 0, data: { phone: "xxx" }, msg: "获取成功" }</code></td>
+        <td><span class="tag-diff">格式不同</span></td>
+    </tr>
+</table>
+
+<h2>三、微信登录功能</h2>
+
+<table>
+    <tr>
+        <th>对比项</th>
+        <th>mall (Java原版)</th>
+        <th>ry (若依)</th>
+        <th>mall-go (当前)</th>
+        <th>状态</th>
+    </tr>
+    <tr>
+        <td>登录方式</td>
+        <td>公众号扫码登录（<code>/wxLogin</code>）</td>
+        <td>手机号+密码登录（<code>/client/login</code>）</td>
+        <td>小程序code登录（<code>/mini/login</code>）</td>
+        <td><span class="tag-diff">方式不同</span></td>
+    </tr>
+    <tr>
+        <td>Token格式</td>
+        <td>sessionKey作为token</td>
+        <td>JWT Token</td>
+        <td>JWT Token</td>
+        <td><span class="tag-done">一致</span></td>
+    </tr>
+    <tr>
+        <td>用户创建</td>
+        <td>扫码时创建WxUser</td>
+        <td>手机号注册时创建MxUser</td>
+        <td>code登录时创建WxUser</td>
+        <td><span class="tag-done">已实现</span></td>
+    </tr>
+</table>
+
+<h2>四、功能联动架构</h2>
+
+<table>
+    <tr>
+        <th>联动环节</th>
+        <th>mall原版架构</th>
+        <th>mall-go 当前架构</th>
+        <th>状态</th>
+    </tr>
+    <tr>
+        <td>小程序 → 后台</td>
+        <td>小程序调 mall 后台 <code>/door/lock/open</code></td>
+        <td>小程序调 mall-go <code>/mini/remote/door/open</code> → <code>DoorLockService.OpenDoor</code></td>
+        <td><span class="tag-done">已打通</span></td>
+    </tr>
+    <tr>
+        <td>后台 → 第三方门锁</td>
+        <td>mall 调 <code>yun.andudu.net</code> API</td>
+        <td>mall-go 调 <code>yun.andudu.net</code> API（DoorLockConfig配置）</td>
+        <td><span class="tag-done">已打通</span></td>
+    </tr>
+    <tr>
+        <td>后台 → 验光APP</td>
+        <td>mall 调 ry <code>/client/wxUser/add</code>（HTTP跨服务）</td>
+        <td>mall-go 直接操作同库 MxUser/MxStoreMember 表</td>
+        <td><span class="tag-done">已打通</span></td>
+    </tr>
+    <tr>
+        <td>后台 → 门店通知</td>
+        <td>ry WebSocket 通知门店</td>
+        <td>wsmanager.SendOpenDoorNotify 通知门店</td>
+        <td><span class="tag-done">已打通</span></td>
+    </tr>
+    <tr>
+        <td>后台管理页 → 门锁管理</td>
+        <td>若依后台管理页 CRUD 门锁</td>
+        <td>gin-vue-admin 后台管理页 CRUD 门锁（DoorLockRouter）</td>
+        <td><span class="tag-done">已打通</span></td>
+    </tr>
+</table>
+
+<h2>五、当前状态汇总</h2>
+
+<table>
+    <tr>
+        <th>#</th>
+        <th>功能点</th>
+        <th>之前状态</th>
+        <th>当前状态</th>
+    </tr>
+    <tr>
+        <td>1</td>
+        <td>第三方云平台远程开门</td>
+        <td><span class="tag-missing">缺失</span></td>
+        <td><span class="tag-done">已实现</span></td>
+    </tr>
+    <tr>
+        <td>2</td>
+        <td>开门操作记录持久化</td>
+        <td><span class="tag-missing">缺失</span></td>
+        <td><span class="tag-done">已实现</span></td>
+    </tr>
+    <tr>
+        <td>3</td>
+        <td>门锁信息校验</td>
+        <td><span class="tag-missing">缺失</span></td>
+        <td><span class="tag-done">已实现</span></td>
+    </tr>
+    <tr>
+        <td>4</td>
+        <td>开门后同步用户到验光APP</td>
+        <td><span class="tag-missing">缺失</span></td>
+        <td><span class="tag-done">已实现</span></td>
+    </tr>
+    <tr>
+        <td>5</td>
+        <td>WebSocket通知门店</td>
+        <td><span class="tag-missing">缺失</span></td>
+        <td><span class="tag-done">已实现</span></td>
+    </tr>
+    <tr>
+        <td>6</td>
+        <td>手机号获取+自动注册</td>
+        <td><span class="tag-missing">缺失</span></td>
+        <td><span class="tag-done">已实现</span></td>
+    </tr>
+    <tr>
+        <td>7</td>
+        <td>小程序↔后台↔验光APP联动</td>
+        <td><span class="tag-missing">缺失</span></td>
+        <td><span class="tag-done">已打通</span></td>
+    </tr>
+</table>
+
+</body>
+</html>

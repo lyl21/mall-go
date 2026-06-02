@@ -3,7 +3,7 @@
  */
 
 export const config = {
-  appName: '希铭光学后台管理系统',
+  appName: '希铭光学',
   showViteLogo: true,
   keepAliveTabs: false,
   logs: []

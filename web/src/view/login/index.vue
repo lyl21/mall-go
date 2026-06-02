@@ -20,7 +20,7 @@
                 {{ $GIN_VUE_ADMIN.appName }}
               </p>
               <p class="text-center text-sm font-normal text-gray-500 mt-2.5">
-                希铭光学后台管理系统
+                希铭光学
               </p>
             </div>
             <el-form

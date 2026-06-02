@@ -15,6 +15,7 @@ import (
 	storeModel "github.com/flipped-aurora/gin-vue-admin/server/model/store"
 	wechatModel "github.com/flipped-aurora/gin-vue-admin/server/model/wechat"
 	storeService "github.com/flipped-aurora/gin-vue-admin/server/service/store"
+	"github.com/flipped-aurora/gin-vue-admin/server/utils"
 	"github.com/flipped-aurora/gin-vue-admin/server/wsmanager"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
@@ -225,16 +226,22 @@ func (s *DoorLockService) OpenDoor(id int64, openId string) (string, error) {
 // doorRemote 调用第三方接口远程开门
 func (s *DoorLockService) doorRemote(doorGuid string) (string, error) {
 	cfg := global.GVA_CONFIG.DoorLock
-	baseURL := cfg.BaseURL
+
+	// 优先从 sys_params 表读取，不存在则用 config.yaml 的默认值
+	baseURL := utils.GetParamValue("door_lock_base_url", cfg.BaseURL)
 	if baseURL == "" {
 		baseURL = "https://yun.andudu.net/dist"
 	}
+	username := utils.GetParamValue("door_lock_username", cfg.Username)
+	password := utils.GetParamValue("door_lock_password", cfg.Password)
+	yardSn := utils.GetParamValue("door_lock_yard_sn", cfg.YardSn)
+	gyscode := utils.GetParamValue("door_lock_gyscode", cfg.Gyscode)
 
 	// 1. 登录获取 token
 	loginURL := baseURL + "/sess/check-login"
 	loginBody := map[string]string{
-		"username": cfg.Username,
-		"password": cfg.Password,
+		"username": username,
+		"password": password,
 	}
 	loginJSON, _ := json.Marshal(loginBody)
 
@@ -259,12 +266,11 @@ func (s *DoorLockService) doorRemote(doorGuid string) (string, error) {
 
 	// 2. 调用开门接口
 	openURL := baseURL + "/device/door-remote"
-	gyscode := cfg.Gyscode
 	if gyscode == "" {
 		gyscode = "hyzh"
 	}
 	openBody := map[string]string{
-		"yard_sn":      cfg.YardSn,
+		"yard_sn":      yardSn,
 		"door_sn":      doorGuid,
 		"door_gyscode": gyscode,
 		"cmd_type":     "open",

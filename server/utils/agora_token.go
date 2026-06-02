@@ -17,9 +17,12 @@ type AgoraTokenGenerator struct {
 
 // NewAgoraTokenGenerator 创建声网 Token 生成器
 func NewAgoraTokenGenerator() *AgoraTokenGenerator {
+	// 优先从 sys_params 表读取，不存在则用 config.yaml 默认值
+	appID := GetParamValue("agora_app_id", global.GVA_CONFIG.Agora.AppId)
+	appCertificate := GetParamValue("agora_app_certificate", global.GVA_CONFIG.Agora.AppCertificate)
 	return &AgoraTokenGenerator{
-		appID:              global.GVA_CONFIG.Agora.AppId,
-		appCertificate:     global.GVA_CONFIG.Agora.AppCertificate,
+		appID:              appID,
+		appCertificate:     appCertificate,
 		tokenExpireSeconds: 86400, // 默认24小时
 	}
 }

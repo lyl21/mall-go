@@ -152,7 +152,7 @@ module.exports = {
     return request('/mini/useraddress/' + id, 'delete', null, false)
   },
   openDoor: (id,openId) => {
-    return request('/mini/remote/door/open', 'post', { deviceId: id, openId: openId }, true)
+    return request('/mini/remote/door/open', 'post', { deviceId: String(id), openId: openId }, true)
   },
   // 远程控制接口
   remoteControl: (data) => {//远程控制设备

@@ -60,7 +60,8 @@ build_web() {
 
   echo ""
   echo -e "${YELLOW}=== [Web] 2/3 Docker 多阶段构建（pnpm install + vite build）===${NC}"
-  DOCKER_BUILDKIT=1 docker-compose -f "$COMPOSE_FILE" build web
+  # --no-cache: 确保vite.config.js等配置变更后完全重建,避免缓存导致白屏
+  DOCKER_BUILDKIT=1 docker-compose -f "$COMPOSE_FILE" build --no-cache web
 
   echo ""
   echo -e "${YELLOW}=== [Web] 3/3 启动容器 ===${NC}"

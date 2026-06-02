@@ -85,9 +85,9 @@ export default ({ mode }) => {
       outDir: outDir,
       rollupOptions
     },
-    // esbuild配置: 移除console和debugger(替代terserOptions)
+    // esbuild配置: 移除debugger(保留console用于排查白屏问题)
     esbuild: {
-      drop: ['console', 'debugger']
+      drop: ['debugger']
     },
     optimizeDeps,
     plugins: [

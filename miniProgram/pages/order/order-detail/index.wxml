@@ -48,7 +48,7 @@
             <view class="align-center">
               <view class="flex align-center">
           
-                <image src="{{item.picUrl ? imgBasePath+item.picUrl : '/public/img/no_pic.png'}}" mode="aspectFill" class="row-img margin-top-xs"></image>
+                <image src="{{item.picUrl ? (item.picUrl.indexOf('http') === 0 ? item.picUrl : imgBasePath+item.picUrl) : '/public/img/no_pic.png'}}" mode="aspectFill" class="row-img margin-top-xs"></image>
 
               </view>
                 <view class="desc row-info">

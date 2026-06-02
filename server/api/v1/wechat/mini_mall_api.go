@@ -173,6 +173,7 @@ func (a *MiniMallApi) GetGoodsSpuById(c *gin.Context) {
 // parsePicUrlsToArray 将 picUrls 从 JSON 字符串解析为数组
 // 数据库中 picUrls 存储为 JSON 数组字符串如 '["/uploads/xxx.jpg"]'
 // 前端小程序使用 item.picUrls[0] 访问，需要返回数组而非字符串
+// 同时清理路径：去除 /dev-api/ 前缀、完整URL直接返回
 func parsePicUrlsToArray(picUrls string) []string {
 	if picUrls == "" {
 		return []string{}
@@ -181,7 +182,7 @@ func parsePicUrlsToArray(picUrls string) []string {
 	// 尝试解析为 JSON 数组
 	var urls []string
 	if err := json.Unmarshal([]byte(picUrls), &urls); err == nil && len(urls) > 0 {
-		return urls
+		return normalizePicUrls(urls)
 	}
 
 	// 尝试按逗号分隔
@@ -192,6 +193,33 @@ func parsePicUrlsToArray(picUrls string) []string {
 		if p != "" {
 			result = append(result, p)
 		}
+	}
+	return normalizePicUrls(result)
+}
+
+// normalizePicUrls 规范化图片URL列表
+// 1. 已是完整URL（http/https开头）直接返回，前端无需拼接 imgBasePath
+// 2. 带有 /dev-api/ 前缀的路径去除前缀（旧数据兼容）
+// 3. 确保相对路径以 / 开头
+func normalizePicUrls(urls []string) []string {
+	result := make([]string, 0, len(urls))
+	for _, url := range urls {
+		url = strings.TrimSpace(url)
+		if url == "" {
+			continue
+		}
+		// 已是完整URL，直接保留
+		if strings.HasPrefix(url, "http://") || strings.HasPrefix(url, "https://") {
+			result = append(result, url)
+			continue
+		}
+		// 去除 /dev-api/ 前缀（旧数据兼容）
+		url = strings.TrimPrefix(url, "/dev-api")
+		// 确保以 / 开头
+		if !strings.HasPrefix(url, "/") {
+			url = "/" + url
+		}
+		result = append(result, url)
 	}
 	return result
 }

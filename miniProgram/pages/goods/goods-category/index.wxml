@@ -23,10 +23,10 @@
       <view class="cu-bar bg-white solid-bottom">
         <view class="cate-list">
           <!-- <image wx:if="{{item.picUrl}}" class="img-banner radius" src="{{item.picUrl}}"></image> -->
-          <image wx:if="{{item.picUrl}}" class="img-banner radius" src="{{config.imgBasePath+item.picUrl}}"></image>
+          <image wx:if="{{item.picUrl}}" class="img-banner radius" src="{{item.picUrl.indexOf('http') === 0 ? item.picUrl : config.imgBasePath+item.picUrl}}"></image>
           <view wx:if="{{ item.children.length>0 }}" wx:for="{{item.children}}" wx:for-item="item2" wx:key="index" class="cate">
             <navigator hover-class='none' url='/pages/goods/goods-list/index?categorySecond={{item2.id}}&title={{item2.name}}'>
-              <image class="cate-img" src="{{item2.picUrl ? config.imgBasePath+item2.picUrl : '/public/img/no_pic.png'}}"></image>
+              <image class="cate-img" src="{{item2.picUrl ? (item2.picUrl.indexOf('http') === 0 ? item2.picUrl : config.imgBasePath+item2.picUrl) : '/public/img/no_pic.png'}}"></image>
               <view class='text-sm'>{{item2.name}}</view>
             </navigator>
           </view>

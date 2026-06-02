@@ -23,7 +23,7 @@
           <checkbox class="blue round margin-left" value="{{item.id}}" disabled="{{(item.quantity > item.goodsSpu.stock || !item.goodsSpu) && operation}}" checked="{{item.checked}}"></checkbox>
           <navigator hover-class='none' style="width:100%" url='/pages/goods/goods-detail/index?id={{item.spuId}}'>
             <view class="content">
-              <image src="{{item.goodsSpu.picUrls[0] ? config.imgBasePath+item.goodsSpu.picUrls[0] : '/public/img/no_pic.png'}}" mode="aspectFill" class="row-img margin-top-xs"></image>
+              <image src="{{item.goodsSpu.picUrls[0] ? (item.goodsSpu.picUrls[0].indexOf('http') === 0 ? item.goodsSpu.picUrls[0] : config.imgBasePath+item.goodsSpu.picUrls[0]) : '/public/img/no_pic.png'}}" mode="aspectFill" class="row-img margin-top-xs"></image>
               <view class="desc row-info">
                 <view class="text-black margin-top-sm overflow-2">{{item.goodsSpu.name}}</view>
                 <view class="text-gray text-sm margin-top-xs cu-tag round" catchtap bindtap="changeSpecs" data-spuid="{{item.goodsSpu.id}}" data-index="{{index}}" wx:if="{{item.goodsSpu.specType == '1'}}">

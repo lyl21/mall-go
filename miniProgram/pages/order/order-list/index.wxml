@@ -21,7 +21,7 @@
         </view>
         <view class="cu-item padding-bottom" wx:for="{{ item.listOrderItem }}" wx:for-item="item2" wx:key="index" wx:for-index="index2">
           <view class="content">
-            <image src="{{item2.picUrl ? imgBasePath+item2.picUrl : '/public/img/no_pic.png'}}" mode="aspectFill" class="row-img margin-top-xs"></image>
+            <image src="{{item2.picUrl ? (item2.picUrl.indexOf('http') === 0 ? item2.picUrl : imgBasePath+item2.picUrl) : '/public/img/no_pic.png'}}" mode="aspectFill" class="row-img margin-top-xs"></image>
             <view class="desc row-info margin-top-sm">
               <view class="text-black margin-top-sm overflow-2">{{item2.spuName}}</view>
               <view class="text-gray text-sm margin-top-sm overflow-2" wx:if="{{item2.specInfo}}">{{item2.specInfo}}</view>

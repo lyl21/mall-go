@@ -4,7 +4,7 @@ const __config = require('../../config/env')
 Component({
   properties: {
     goodsList: {
-      type: Object,
+      type: Array,
       value: []
     }
   },

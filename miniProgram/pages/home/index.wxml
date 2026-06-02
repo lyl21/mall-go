@@ -71,7 +71,7 @@
             <view class='text-cut text-sm text-gray margin-top-sm'>{{item.sellPoint}}</view>
             <view class='img-box margin-top-xl'>
               <!-- <image src="{{item.picUrls[0] ?  item.picUrls[0] : '/public/img/no_pic.png'}}"></image> -->
-              <image src="{{item.picUrls[0] ? config.imgBasePath+item.picUrls[0] : '/public/img/no_pic.png'}}"></image>
+              <image src="{{item.picUrls[0] ? (item.picUrls[0].indexOf('http') === 0 ? item.picUrls[0] : config.imgBasePath+item.picUrls[0]) : '/public/img/no_pic.png'}}"></image>
 
             </view>
             <view class="flex justify-between margin-top">

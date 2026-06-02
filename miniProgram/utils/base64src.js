@@ -26,4 +26,5 @@ function base64src(base64data, cb) {
   })
 };
 
-export { base64src };
+// 使用 CommonJS 导出，兼容 require 引入
+module.exports = { base64src };

@@ -1,5 +1,6 @@
 
-export default {
+// 使用 CommonJS 导出方式，以兼容 require 引入
+module.exports = {
   //服务器地址，即后台服务的访问地址；本地开发填http://localhost:7500即可，正式服务器环境https://后台地址/prod-api；如果要用真机调试要把localhost换成局域网ip，手机和电脑要处于同一局域网中
   basePath: 'https://admin.ximingtech.com/api',
   //图片资源地址

@@ -1,5 +1,6 @@
 
-import __config from '../config/env'
+// 使用 CommonJS 引入方式，兼容小程序原生环境
+const __config = require('../config/env')
 
 const request = (url, method, data, showLoading) => {
   let _url = __config.basePath + url

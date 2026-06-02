@@ -33,20 +33,24 @@ cleanup_docker() {
 # 构建 server: 宿主机编译 Go 二进制 → 复制到镜像 → 启动容器
 # ============================================================
 build_server() {
-  echo -e "${YELLOW}=== [Server] 1/3 停旧容器 ===${NC}"
+  echo -e "${YELLOW}=== [Server] 1/4 停旧容器 ===${NC}"
   docker-compose -f "$COMPOSE_FILE" stop server 2>/dev/null || true
   docker-compose -f "$COMPOSE_FILE" rm -f server 2>/dev/null || true
 
   echo ""
-  echo -e "${YELLOW}=== [Server] 2/3 编译 Go 二进制（宿主机，增量秒级）===${NC}"
+  echo -e "${YELLOW}=== [Server] 2/4 编译 Go 二进制（宿主机，增量秒级）===${NC}"
   cd "$PROJECT_DIR/server"
   CGO_ENABLED=0 go build -ldflags="-s -w" -o server .
   echo -e "${GREEN}编译完成: $(ls -lh server | awk '{print $5}')${NC}"
 
   echo ""
-  echo -e "${YELLOW}=== [Server] 3/3 构建镜像并启动 ===${NC}"
+  echo -e "${YELLOW}=== [Server] 3/4 构建镜像并启动 ===${NC}"
   DOCKER_BUILDKIT=1 docker build -t xm-server "$PROJECT_DIR/server/"
   docker-compose -f "$COMPOSE_FILE" up -d server
+
+  echo ""
+  echo -e "${YELLOW}=== [Server] 4/4 清理旧镜像 ===${NC}"
+  docker image prune -f 2>/dev/null || true
   echo -e "${GREEN}[Server] 完成！${NC}"
 }
 
@@ -54,18 +58,23 @@ build_server() {
 # 构建 web: Docker 多阶段构建（依赖缓存 + esbuild 压缩）
 # ============================================================
 build_web() {
-  echo -e "${YELLOW}=== [Web] 1/3 停旧容器 ===${NC}"
+  echo -e "${YELLOW}=== [Web] 1/4 停旧容器 ===${NC}"
   docker-compose -f "$COMPOSE_FILE" stop web 2>/dev/null || true
   docker-compose -f "$COMPOSE_FILE" rm -f web 2>/dev/null || true
 
   echo ""
-  echo -e "${YELLOW}=== [Web] 2/3 Docker 多阶段构建（pnpm install + vite build）===${NC}"
+  echo -e "${YELLOW}=== [Web] 2/4 Docker 多阶段构建（pnpm install + vite build）===${NC}"
   # --no-cache: 确保vite.config.js等配置变更后完全重建,避免缓存导致白屏
   DOCKER_BUILDKIT=1 docker-compose -f "$COMPOSE_FILE" build --no-cache web
 
   echo ""
-  echo -e "${YELLOW}=== [Web] 3/3 启动容器 ===${NC}"
+  echo -e "${YELLOW}=== [Web] 3/4 启动容器 ===${NC}"
   docker-compose -f "$COMPOSE_FILE" up -d web
+
+  echo ""
+  echo -e "${YELLOW}=== [Web] 4/4 清理旧镜像和构建缓存 ===${NC}"
+  docker image prune -f 2>/dev/null || true
+  docker builder prune -f --filter "until=1h" 2>/dev/null || true
   echo -e "${GREEN}[Web] 完成！${NC}"
 }
 

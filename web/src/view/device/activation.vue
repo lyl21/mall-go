@@ -183,7 +183,9 @@ const deleteRow = async (row) => {
 
 // WebSocket连接
 const connectWebSocket = () => {
-  const wsUrl = `ws://${window.location.host}/ws/device`
+  // 根据页面协议自动选择ws/wss, HTTPS页面必须使用wss://否则浏览器会阻止
+  const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+  const wsUrl = `${wsProtocol}//${window.location.host}/ws/device`
   ws.value = new WebSocket(wsUrl)
 
   ws.value.onopen = () => {

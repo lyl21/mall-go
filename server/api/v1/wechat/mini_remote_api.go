@@ -182,8 +182,8 @@ func (a *MiniRemoteApi) GetOnlineUsers(c *gin.Context) {
 
 // RemoteDoorOpenRequest 远程开门请求
 type RemoteDoorOpenRequest struct {
-	Id     int64  `json:"id" binding:"required"` // 门锁ID（door_lock表主键）
-	OpenID string `json:"openId"`                // 用户openId（可选，后端也从JWT获取）
+	DoorId int64  `json:"doorId" binding:"required"` // 门锁ID（door_lock表主键）
+	OpenID string `json:"openId"`                    // 用户openId（可选，后端也从JWT获取）
 }
 
 // RemoteDoorOpen 远程开门（调用 DoorLockService 完整流程：远程开门→记录历史→同步用户→WS通知门店）
@@ -212,7 +212,7 @@ func (a *MiniRemoteApi) RemoteDoorOpen(c *gin.Context) {
 	}
 
 	global.GVA_LOG.Info("小程序远程开门",
-		zap.Int64("id", req.Id),
+		zap.Int64("doorId", req.DoorId),
 		zap.String("openId", openId))
 
 	// 调用 DoorLockService.OpenDoor 完整流程：
@@ -224,7 +224,7 @@ func (a *MiniRemoteApi) RemoteDoorOpen(c *gin.Context) {
 	// 6. 查找或创建门店用户（MxUser）
 	// 7. 添加门店成员关系
 	// 8. WebSocket通知门店店长/验光师
-	result, err := mallService.DoorLockServiceApp.OpenDoor(req.Id, openId)
+	result, err := mallService.DoorLockServiceApp.OpenDoor(req.DoorId, openId)
 	if err != nil {
 		global.GVA_LOG.Error("远程开门失败", zap.Error(err))
 		response.FailWithMessage(err.Error(), c)

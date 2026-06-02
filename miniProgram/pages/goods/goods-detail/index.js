@@ -1,6 +1,6 @@
 
 const WxParse = require('../../../public/wxParse/wxParse.js')
-const Poster = require('../../../components/wxa-plugin-canvas/poster/poster')
+import Poster from '../../../components/wxa-plugin-canvas/poster/poster'
 const { base64src } = require('../../../utils/base64src.js')
 const app = getApp()
 

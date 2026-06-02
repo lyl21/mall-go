@@ -26,5 +26,4 @@ Poster.create = (reset = false, that) => {
     }
 }
 
-// 使用 CommonJS 导出，兼容 require 引入
-module.exports = Poster;
+export default Poster;

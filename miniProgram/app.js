@@ -1,6 +1,5 @@
-// 使用 CommonJS 引入方式，兼容小程序原生环境
-const api = require('./utils/api')
-const __config = require('./config/env')
+import api from './utils/api'
+import __config from './config/env'
 
 App({
   api,
@@ -72,9 +71,7 @@ App({
     return new Promise((resolve, reject) => {
       wx.login({
         success: res => {
-          if (res.code) {wechat-mini-program:
-    app-id: ""      # ← 空的！
-    app-secret: ""  # ← 空的！
+          if (res.code) {
             this.api.login({ code: res.code }).then(res => {
               wx.hideLoading()
               const wxUser = res.data.wxUser || res.data

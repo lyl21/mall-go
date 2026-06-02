@@ -1,3 +1,4 @@
+import legacyPlugin from '@vitejs/plugin-legacy'
 import { viteLogo } from './src/core/config'
 import * as path from 'path'
 import { loadEnv } from 'vite'
@@ -87,7 +88,13 @@ export default ({ mode }) => {
     plugins: [
       env.VITE_POSITION === 'open' &&
       vueDevTools({ launchEditor: env.VITE_EDITOR }),
-      // legacyPlugin 已移除: 内部管理后台不需要旧浏览器兼容，legacy 会让构建时间翻倍
+      // legacyPlugin: 降级ES2020+语法(如???.),避免旧浏览器白屏
+      legacyPlugin({
+        targets: ['Chrome >= 60', 'Safari >= 10.1', 'iOS >= 10.3', 'Firefox >= 54', 'Edge >= 15'],
+        // 不生成polyfill,仅做语法降级,大幅减少构建时间和产物体积
+        modernPolyfills: false,
+        renderModernChunks: true
+      }),
       vuePlugin(),
       svgBuilder(['./src/plugin/', './src/assets/icons/'], base, outDir, 'assets', mode),
       VueFilePathPlugin('./src/pathInfo.json'),

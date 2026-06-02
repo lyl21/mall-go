@@ -1,12 +1,14 @@
 package mall
 
 import (
+	"encoding/json"
+	"strings"
+
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/common/request"
 	mallModel "github.com/flipped-aurora/gin-vue-admin/server/model/mall"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
-	"strings"
 )
 
 type GoodsSpuService struct{}
@@ -81,7 +83,7 @@ func (s *GoodsSpuService) GetGoodsSpuList(info request.PageInfo, name string, ca
 		spuMap["description"] = spu.Description
 		spuMap["categoryFirst"] = spu.CategoryFirst
 		spuMap["categorySecond"] = spu.CategorySecond
-		spuMap["picUrls"] = spu.PicUrls
+		spuMap["picUrls"] = parsePicUrlsToArray(spu.PicUrls)
 		spuMap["shelf"] = spu.Shelf
 		spuMap["sort"] = spu.Sort
 		spuMap["salesPrice"] = spu.SalesPrice
@@ -108,4 +110,30 @@ func (s *GoodsSpuService) GetGoodsSpuList(info request.PageInfo, name string, ca
 		result = append(result, spuMap)
 	}
 	return result, total, err
+}
+
+// parsePicUrlsToArray 将 picUrls 从 JSON 字符串解析为数组
+// 数据库中 picUrls 存储为 JSON 数组字符串如 '["/uploads/xxx.jpg"]'
+// 前端使用 item.picUrls[0] 访问，需要返回数组而非字符串
+func parsePicUrlsToArray(picUrls string) []string {
+	if picUrls == "" {
+		return []string{}
+	}
+
+	// 尝试解析为 JSON 数组
+	var urls []string
+	if err := json.Unmarshal([]byte(picUrls), &urls); err == nil && len(urls) > 0 {
+		return urls
+	}
+
+	// 尝试按逗号分隔
+	parts := strings.Split(picUrls, ",")
+	result := make([]string, 0, len(parts))
+	for _, p := range parts {
+		p = strings.TrimSpace(p)
+		if p != "" {
+			result = append(result, p)
+		}
+	}
+	return result
 }

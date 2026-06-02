@@ -71,7 +71,9 @@ App({
     return new Promise((resolve, reject) => {
       wx.login({
         success: res => {
-          if (res.code) {
+          if (res.code) {wechat-mini-program:
+    app-id: ""      # ← 空的！
+    app-secret: ""  # ← 空的！
             this.api.login({ code: res.code }).then(res => {
               wx.hideLoading()
               const wxUser = res.data.wxUser || res.data

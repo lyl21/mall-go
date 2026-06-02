@@ -1,6 +1,9 @@
 package wechat
 
 import (
+	"encoding/json"
+	"strings"
+
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/common/response"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/mall"
@@ -90,7 +93,30 @@ func (a *MiniMallApi) GetGoodsSpuPage(c *gin.Context) {
 		return
 	}
 
-	response.OkWithData(gin.H{"list": list, "total": total}, c)
+	// 将 picUrls 从 JSON 字符串解析为数组，避免前端 item.picUrls[0] 取到字符串字符
+	resultList := make([]map[string]interface{}, 0, len(list))
+	for _, item := range list {
+		itemMap := make(map[string]interface{})
+		itemMap["id"] = item.Id
+		itemMap["name"] = item.Name
+		itemMap["sellPoint"] = item.SellPoint
+		itemMap["description"] = item.Description
+		itemMap["categoryFirst"] = item.CategoryFirst
+		itemMap["categorySecond"] = item.CategorySecond
+		itemMap["picUrls"] = parsePicUrlsToArray(item.PicUrls)
+		itemMap["shelf"] = item.Shelf
+		itemMap["sort"] = item.Sort
+		itemMap["salesPrice"] = item.SalesPrice
+		itemMap["marketPrice"] = item.MarketPrice
+		itemMap["costPrice"] = item.CostPrice
+		itemMap["stock"] = item.Stock
+		itemMap["salesNum"] = item.SalesNum
+		itemMap["createTime"] = item.CreateTime
+		itemMap["updateTime"] = item.UpdateTime
+		resultList = append(resultList, itemMap)
+	}
+
+	response.OkWithData(gin.H{"list": resultList, "total": total}, c)
 }
 
 // GetGoodsSpuById 根据ID查询商品详情
@@ -120,7 +146,54 @@ func (a *MiniMallApi) GetGoodsSpuById(c *gin.Context) {
 	global.GVA_DB.Where("goods_spu_id = ?", id).Find(&banners)
 	goods.Banners = banners
 
-	response.OkWithData(goods, c)
+	// 将 picUrls 从 JSON 字符串解析为数组返回
+	resultMap := make(map[string]interface{})
+	resultMap["id"] = goods.Id
+	resultMap["spuCode"] = goods.SpuCode
+	resultMap["name"] = goods.Name
+	resultMap["sellPoint"] = goods.SellPoint
+	resultMap["description"] = goods.Description
+	resultMap["categoryFirst"] = goods.CategoryFirst
+	resultMap["categorySecond"] = goods.CategorySecond
+	resultMap["picUrls"] = parsePicUrlsToArray(goods.PicUrls)
+	resultMap["shelf"] = goods.Shelf
+	resultMap["sort"] = goods.Sort
+	resultMap["salesPrice"] = goods.SalesPrice
+	resultMap["marketPrice"] = goods.MarketPrice
+	resultMap["costPrice"] = goods.CostPrice
+	resultMap["stock"] = goods.Stock
+	resultMap["salesNum"] = goods.SalesNum
+	resultMap["createTime"] = goods.CreateTime
+	resultMap["updateTime"] = goods.UpdateTime
+	resultMap["banners"] = goods.Banners
+
+	response.OkWithData(resultMap, c)
+}
+
+// parsePicUrlsToArray 将 picUrls 从 JSON 字符串解析为数组
+// 数据库中 picUrls 存储为 JSON 数组字符串如 '["/uploads/xxx.jpg"]'
+// 前端小程序使用 item.picUrls[0] 访问，需要返回数组而非字符串
+func parsePicUrlsToArray(picUrls string) []string {
+	if picUrls == "" {
+		return []string{}
+	}
+
+	// 尝试解析为 JSON 数组
+	var urls []string
+	if err := json.Unmarshal([]byte(picUrls), &urls); err == nil && len(urls) > 0 {
+		return urls
+	}
+
+	// 尝试按逗号分隔
+	parts := strings.Split(picUrls, ",")
+	result := make([]string, 0, len(parts))
+	for _, p := range parts {
+		p = strings.TrimSpace(p)
+		if p != "" {
+			result = append(result, p)
+		}
+	}
+	return result
 }
 
 // GetBannerList 获取首页Banner列表

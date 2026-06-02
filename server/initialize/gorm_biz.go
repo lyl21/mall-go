@@ -20,6 +20,19 @@ func bizModel() error {
 		}
 	}
 
+	// 修复菜单component路径: 页面从view/store/迁移后数据库路径未同步,导致前端白屏
+	if db.Migrator().HasTable("sys_base_menus") {
+		menuPathFixes := map[string]string{
+			"view/store/activation.vue": "view/device/activation.vue",
+			"view/store/packages.vue":   "view/device/packages.vue",
+			"view/store/doorLock.vue":   "view/doorLock/doorLock.vue",
+			"view/store/mxUser.vue":     "view/userManager/mxUser.vue",
+		}
+		for oldPath, newPath := range menuPathFixes {
+			db.Exec("UPDATE sys_base_menus SET component = ? WHERE component = ?", newPath, oldPath)
+		}
+	}
+
 	err := db.AutoMigrate(
 		// 门店管理
 		&storeModel.MxStore{},

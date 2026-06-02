@@ -30,16 +30,17 @@ func (a *WxPhoneApi) GetPhone(c *gin.Context) {
 	// 调用微信API获取手机号
 	// 这里需要调用微信官方接口解密获取手机号
 	// 当前实现返回模拟数据，实际需要对接微信API
-	phone, err := wxMiniService.GetPhoneNumber(code)
-	if err != nil {
-		// 如果获取失败，尝试从数据库读取已存储的手机号
+	phone, phoneErr := wxMiniService.GetPhoneNumber(code)
+	if phoneErr != nil {
+		// 微信API获取失败，尝试从数据库读取已存储的手机号
 		var wxUser wechat.WxUser
-		err := global.GVA_DB.Where("open_id = ?", openid).First(&wxUser).Error
-		if err == nil && wxUser.Phone != nil && *wxUser.Phone != "" {
+		dbErr := global.GVA_DB.Where("open_id = ?", openid).First(&wxUser).Error
+		if dbErr == nil && wxUser.Phone != nil && *wxUser.Phone != "" {
 			response.OkWithDetailed(gin.H{"phone": *wxUser.Phone}, "获取成功", c)
 			return
 		}
-		response.FailWithMessage("获取手机号失败:"+err.Error(), c)
+		global.GVA_LOG.Error("获取手机号失败", zap.String("openid", openid), zap.Error(phoneErr), zap.Error(dbErr))
+		response.FailWithBadRequest("获取手机号失败，请先绑定手机号", c)
 		return
 	}
 

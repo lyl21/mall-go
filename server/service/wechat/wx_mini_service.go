@@ -247,18 +247,27 @@ func (s *WxMiniService) GetPhoneNumber(code string) (phone string, err error) {
 		return
 	}
 
-	// 调用微信接口获取手机号
-	// 注意：微信手机号获取需要使用用户授权的 code，通过 cloudbase 或直接调用解密接口
-	// 这里实现一个简单版本，实际生产需要根据微信官方文档实现解密逻辑
-	// 参考：https://developers.weixin.qq.com/miniprogram/dev/api-backend/open-api/user-info/auth.getPhoneNumber.html
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("微信手机号API异常: %v", r)
+			global.GVA_LOG.Error("GetPhoneNumber panic recovered", zap.Any("panic", r))
+		}
+	}()
 
-	// 当前返回模拟数据，实际项目需要对接微信官方接口
-	// 解密需要 session_key，需要从数据库获取用户的 session_key
-	_ = mp
-	_ = code
+	auth := mp.GetAuth()
+	resp, err := auth.GetPhoneNumber(code)
+	if err != nil {
+		err = fmt.Errorf("微信获取手机号失败: %w", err)
+		return
+	}
 
-	// 返回空，让调用方从数据库读取已存储的手机号
-	return "", errors.New("未实现微信手机号解密，请先通过其他方式绑定手机号")
+	if resp.PhoneInfo.PurePhoneNumber == "" {
+		err = errors.New("微信返回手机号为空")
+		return
+	}
+
+	phone = resp.PhoneInfo.PurePhoneNumber
+	return
 }
 
 // newUserID 生成唯一用户 ID（UUID，去掉连字符共 32 字符）

@@ -25,7 +25,7 @@ type MiniRemoteApi struct{}
 func (a *MiniRemoteApi) GetRemoteOptometryToken(c *gin.Context) {
 	var req GetRemoteTokenRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.FailWithMessage("参数错误: "+err.Error(), c)
+		response.FailWithBadRequest("参数错误: "+err.Error(), c)
 		return
 	}
 
@@ -141,7 +141,7 @@ type RemoteControlRequest struct {
 func (a *MiniRemoteApi) RemoteControl(c *gin.Context) {
 	var req RemoteControlRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.FailWithMessage("参数错误: "+err.Error(), c)
+		response.FailWithBadRequest("参数错误: "+err.Error(), c)
 		return
 	}
 
@@ -181,8 +181,9 @@ func (a *MiniRemoteApi) GetOnlineUsers(c *gin.Context) {
 
 // RemoteDoorOpenRequest 远程开门请求
 type RemoteDoorOpenRequest struct {
-	DeviceID string `json:"deviceId" binding:"required"`
-	Duration int    `json:"duration"` // 开门持续时间（秒）
+	DeviceID string `json:"id" binding:"required"` // 前端传 id 字段
+	OpenID   string `json:"openId"`                // 前端传 openId 字段（可选，后端也从JWT获取）
+	Duration int    `json:"duration"`              // 开门持续时间（秒）
 }
 
 // RemoteDoorOpen 远程开门
@@ -196,7 +197,7 @@ type RemoteDoorOpenRequest struct {
 func (a *MiniRemoteApi) RemoteDoorOpen(c *gin.Context) {
 	var req RemoteDoorOpenRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.FailWithMessage("参数错误: "+err.Error(), c)
+		response.FailWithBadRequest("参数错误: "+err.Error(), c)
 		return
 	}
 

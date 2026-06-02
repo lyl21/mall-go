@@ -251,9 +251,10 @@ wechat:
     mini-app-id: ""
     mch-id: "1712186848"
     api-key: "3eafd7767e5243488e79b0f68e7da100"
-    notify-url: "admin.ximingtech.com"
+    notify-url: "https://admin.ximingtech.com/weixin/api/ma/orderinfo/notify-order-web"
     mch-cert-serial-no: "52AE444F0BE10E6CDB089F8FB8D4E4E2F1086E0E"
     mch-private-key-path: "/home/XM/wxPay/apiclient_key.pem"
+    mch-cert-p12-path: "/home/XM/wxPay/apiclient_cert.p12"
     mch-apiv3-key: "3597c0de7d914163acb6fcf02fc21ff9"
 wechat-mini-program:
     app-id: "wx457a99d69770774d"

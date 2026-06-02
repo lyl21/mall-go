@@ -31,11 +31,11 @@ type MiniPayApi struct{}
 // wechatPayConfig 从 sys_params 优先读取微信支付配置，不存在则用 config.yaml 默认值
 func wechatPayConfig() (appId, mchId, apiKey, notifyUrl, apiV3Key string) {
 	cfg := global.GVA_CONFIG.Wechat
-	appId = utils.GetParamValue("wechat_pay_mini_app_id", cfg.MiniAppID)
-	mchId = utils.GetParamValue("wechat_pay_mch_id", cfg.MchID)
-	apiKey = utils.GetParamValue("wechat_pay_api_key", cfg.APIKey)
-	notifyUrl = utils.GetParamValue("wechat_pay_notify_url", cfg.NotifyURL)
-	apiV3Key = utils.GetParamValue("wechat_pay_apiv3_key", cfg.MchAPIv3Key)
+	appId = utils.GetParamValue("wechat.mini.app.id", cfg.MiniAppID)
+	mchId = utils.GetParamValue("wechat.pay.mch.id", cfg.MchID)
+	apiKey = utils.GetParamValue("wechat.pay.api.key", cfg.APIKey)
+	notifyUrl = utils.GetParamValue("wechat.pay.notify.url", cfg.NotifyURL)
+	apiV3Key = utils.GetParamValue("wechat.pay.apiv3.key", cfg.MchAPIv3Key)
 	return
 }
 

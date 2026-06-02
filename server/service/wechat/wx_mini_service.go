@@ -79,8 +79,8 @@ func (s *WxMiniService) getMiniProgram() (mp *miniprogram.MiniProgram, err error
 	}
 
 	// 优先从 sys_params 表读取，不存在则用 config.yaml 的默认值
-	appID := utils.GetParamValue("wechat_mini_app_id", global.GVA_CONFIG.WechatMiniProgram.AppID)
-	appSecret := utils.GetParamValue("wechat_mini_app_secret", global.GVA_CONFIG.WechatMiniProgram.AppSecret)
+	appID := utils.GetParamValue("wechat.mini.app.id", global.GVA_CONFIG.WechatMiniProgram.AppID)
+	appSecret := utils.GetParamValue("wechat.mini.app.secret", global.GVA_CONFIG.WechatMiniProgram.AppSecret)
 	if appID == "" || appSecret == "" {
 		miniProgramErr = errors.New("微信小程序 AppID/AppSecret 未配置，请在参数管理或 config.yaml 中设置")
 		return nil, miniProgramErr

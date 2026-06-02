@@ -59,6 +59,7 @@ type WechatPayConfig struct {
 	NotifyURL                  string `mapstructure:"notify-url" json:"notifyUrl" yaml:"notify-url"`
 	MchCertificateSerialNumber string `mapstructure:"mch-cert-serial-no" json:"mchCertSerialNo" yaml:"mch-cert-serial-no"`
 	MchPrivateKeyPath          string `mapstructure:"mch-private-key-path" json:"mchPrivateKeyPath" yaml:"mch-private-key-path"`
+	MchCertP12Path             string `mapstructure:"mch-cert-p12-path" json:"mchCertP12Path" yaml:"mch-cert-p12-path"`
 	MchAPIv3Key                string `mapstructure:"mch-apiv3-key" json:"mchApiv3Key" yaml:"mch-apiv3-key"`
 }
 

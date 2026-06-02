@@ -45,8 +45,8 @@ func (a *MiniAgoraApi) GetAgoraToken(c *gin.Context) {
 	}
 
 	// 获取Agora配置（优先从 sys_params 读取）
-	appId := utils.GetParamValue("agora_app_id", global.GVA_CONFIG.Agora.AppId)
-	appCertificate := utils.GetParamValue("agora_app_certificate", global.GVA_CONFIG.Agora.AppCertificate)
+	appId := utils.GetParamValue("agora.app.id", global.GVA_CONFIG.Agora.AppId)
+	appCertificate := utils.GetParamValue("agora.app.certificate", global.GVA_CONFIG.Agora.AppCertificate)
 
 	if appId == "" || appCertificate == "" {
 		response.FailWithMessage("Agora未配置", c)

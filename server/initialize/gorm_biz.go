@@ -61,14 +61,18 @@ func InitSysParams() {
 	cfg := global.GVA_CONFIG
 	params := []sysModel.SysParams{
 		// 微信小程序
-		{Name: "微信小程序AppID", Key: "wechat_mini_app_id", Value: cfg.WechatMiniProgram.AppID, Desc: "微信小程序AppID，优先级高于config.yaml"},
-		{Name: "微信小程序AppSecret", Key: "wechat_mini_app_secret", Value: cfg.WechatMiniProgram.AppSecret, Desc: "微信小程序AppSecret，优先级高于config.yaml"},
+		{Name: "微信小程序AppID", Key: "wechat.mini.app.id", Value: cfg.WechatMiniProgram.AppID, Desc: "微信小程序AppID（登录+支付共用），优先级高于config.yaml"},
+		{Name: "微信小程序AppSecret", Key: "wechat.mini.app.secret", Value: cfg.WechatMiniProgram.AppSecret, Desc: "微信小程序AppSecret，优先级高于config.yaml"},
+		{Name: "微信登录回调域", Key: "wx.miniapp.redirecturi", Value: "", Desc: "微信登录回调域名"},
+
 		// 微信支付
-		{Name: "微信支付小程序AppID", Key: "wechat_pay_mini_app_id", Value: cfg.Wechat.MiniAppID, Desc: "微信支付小程序AppID"},
-		{Name: "微信支付商户号", Key: "wechat_pay_mch_id", Value: cfg.Wechat.MchID, Desc: "微信支付商户号"},
-		{Name: "微信支付API密钥", Key: "wechat_pay_api_key", Value: cfg.Wechat.APIKey, Desc: "微信支付API密钥(V2)"},
-		{Name: "微信支付回调地址", Key: "wechat_pay_notify_url", Value: cfg.Wechat.NotifyURL, Desc: "微信支付回调通知地址"},
-		{Name: "微信支付APIv3密钥", Key: "wechat_pay_apiv3_key", Value: cfg.Wechat.MchAPIv3Key, Desc: "微信支付APIv3密钥(V3)"},
+		{Name: "微信支付商户号", Key: "wechat.pay.mch.id", Value: cfg.Wechat.MchID, Desc: "微信支付商户号，优先级高于config.yaml"},
+		{Name: "微信支付API密钥", Key: "wechat.pay.api.key", Value: cfg.Wechat.APIKey, Desc: "微信支付API密钥(V2)，优先级高于config.yaml"},
+		{Name: "微信支付回调地址", Key: "wechat.pay.notify.url", Value: cfg.Wechat.NotifyURL, Desc: "微信支付回调通知地址，优先级高于config.yaml"},
+		{Name: "微信支付APIv3密钥", Key: "wechat.pay.apiv3.key", Value: cfg.Wechat.MchAPIv3Key, Desc: "微信支付APIv3密钥(V3)，优先级高于config.yaml"},
+		{Name: "微信支付证书序列号", Key: "wx.pay.certificate.serialnumber", Value: cfg.Wechat.MchCertificateSerialNumber, Desc: "微信支付商户证书序列号，优先级高于config.yaml"},
+		{Name: "微信支付p12证书路径", Key: "wechat.pay.certificate.p12.path", Value: cfg.Wechat.MchCertP12Path, Desc: "微信支付商户p12证书(apiclient_cert.p12)路径(V2退款使用)，优先级高于config.yaml"},
+		{Name: "微信支付私钥路径", Key: "wx.pay.privatekey.path", Value: cfg.Wechat.MchPrivateKeyPath, Desc: "微信支付商户私钥(apiclient_key.pem)路径，优先级高于config.yaml"},
 		// 第三方门锁平台
 		{Name: "门锁平台地址", Key: "door_lock_base_url", Value: cfg.DoorLock.BaseURL, Desc: "第三方门锁云平台地址"},
 		{Name: "门锁平台用户名", Key: "door_lock_username", Value: cfg.DoorLock.Username, Desc: "第三方门锁云平台登录用户名"},
@@ -76,8 +80,8 @@ func InitSysParams() {
 		{Name: "门锁平台场站编号", Key: "door_lock_yard_sn", Value: cfg.DoorLock.YardSn, Desc: "第三方门锁云平台场站编号"},
 		{Name: "门锁平台供应商编码", Key: "door_lock_gyscode", Value: cfg.DoorLock.Gyscode, Desc: "第三方门锁云平台供应商编码"},
 		// 声网
-		{Name: "声网AppID", Key: "agora_app_id", Value: cfg.Agora.AppId, Desc: "声网Agora AppID"},
-		{Name: "声网AppCertificate", Key: "agora_app_certificate", Value: cfg.Agora.AppCertificate, Desc: "声网Agora AppCertificate"},
+		{Name: "声网AppID", Key: "agora.app.id", Value: cfg.Agora.AppId, Desc: "声网Agora AppID"},
+		{Name: "声网AppCertificate", Key: "agora.app.certificate", Value: cfg.Agora.AppCertificate, Desc: "声网Agora AppCertificate"},
 	}
 
 	for _, p := range params {

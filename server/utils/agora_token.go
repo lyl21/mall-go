@@ -18,8 +18,8 @@ type AgoraTokenGenerator struct {
 // NewAgoraTokenGenerator 创建声网 Token 生成器
 func NewAgoraTokenGenerator() *AgoraTokenGenerator {
 	// 优先从 sys_params 表读取，不存在则用 config.yaml 默认值
-	appID := GetParamValue("agora_app_id", global.GVA_CONFIG.Agora.AppId)
-	appCertificate := GetParamValue("agora_app_certificate", global.GVA_CONFIG.Agora.AppCertificate)
+	appID := GetParamValue("agora.app.id", global.GVA_CONFIG.Agora.AppId)
+	appCertificate := GetParamValue("agora.app.certificate", global.GVA_CONFIG.Agora.AppCertificate)
 	return &AgoraTokenGenerator{
 		appID:              appID,
 		appCertificate:     appCertificate,
@@ -47,16 +47,16 @@ func (g *AgoraTokenGenerator) GenerateRtcToken(channelName string, uid int) stri
 		expireTimestamp,
 	)
 	if err != nil {
-		global.GVA_LOG.Error("生成 RTC Token 失败", 
-			zap.String("channelName", channelName), 
-			zap.Int("uid", uid), 
+		global.GVA_LOG.Error("生成 RTC Token 失败",
+			zap.String("channelName", channelName),
+			zap.Int("uid", uid),
 			zap.Error(err))
 		return ""
 	}
 
-	global.GVA_LOG.Info("生成 RTC Token 成功", 
-		zap.String("channelName", channelName), 
-		zap.Int("uid", uid), 
+	global.GVA_LOG.Info("生成 RTC Token 成功",
+		zap.String("channelName", channelName),
+		zap.Int("uid", uid),
 		zap.Uint32("expireTimestamp", expireTimestamp))
 	return token
 }
@@ -79,16 +79,16 @@ func (g *AgoraTokenGenerator) GenerateRtcTokenWithAccount(channelName string, ac
 		expireTimestamp,
 	)
 	if err != nil {
-		global.GVA_LOG.Error("生成 RTC Token 失败", 
-			zap.String("channelName", channelName), 
-			zap.String("account", account), 
+		global.GVA_LOG.Error("生成 RTC Token 失败",
+			zap.String("channelName", channelName),
+			zap.String("account", account),
 			zap.Error(err))
 		return ""
 	}
 
-	global.GVA_LOG.Info("生成 RTC Token 成功", 
-		zap.String("channelName", channelName), 
-		zap.String("account", account), 
+	global.GVA_LOG.Info("生成 RTC Token 成功",
+		zap.String("channelName", channelName),
+		zap.String("account", account),
 		zap.Uint32("expireTimestamp", expireTimestamp))
 	return token
 }

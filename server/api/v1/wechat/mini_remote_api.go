@@ -181,9 +181,9 @@ func (a *MiniRemoteApi) GetOnlineUsers(c *gin.Context) {
 
 // RemoteDoorOpenRequest 远程开门请求
 type RemoteDoorOpenRequest struct {
-	DeviceID string `json:"id" binding:"required"` // 前端传 id 字段
-	OpenID   string `json:"openId"`                // 前端传 openId 字段（可选，后端也从JWT获取）
-	Duration int    `json:"duration"`              // 开门持续时间（秒）
+	DeviceID string `json:"deviceId" binding:"required"` // 设备ID
+	OpenID   string `json:"openId"`                     // 用户openId（可选，后端也从JWT获取）
+	Duration int    `json:"duration"`                   // 开门持续时间（秒）
 }
 
 // RemoteDoorOpen 远程开门

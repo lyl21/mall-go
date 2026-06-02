@@ -1,4 +1,3 @@
-import legacyPlugin from '@vitejs/plugin-legacy'
 import { viteLogo } from './src/core/config'
 import * as path from 'path'
 import { loadEnv } from 'vite'
@@ -76,17 +75,11 @@ export default ({ mode }) => {
       }
     },
     build: {
-      minify: 'terser', // 是否进行压缩,boolean | 'terser' | 'esbuild',默认使用terser
+      minify: 'esbuild', // esbuild 比 terser 快 20 倍以上
       manifest: false, // 是否产出manifest.json
       sourcemap: false, // 是否产出sourcemap.json
       outDir: outDir, // 产出目录
-      terserOptions: {
-        compress: {
-          //生产环境时移除console
-          drop_console: true,
-          drop_debugger: true
-        }
-      },
+      // terserOptions 已移除，使用 esbuild 压缩无需额外配置
       rollupOptions
     },
     esbuild,
@@ -94,16 +87,7 @@ export default ({ mode }) => {
     plugins: [
       env.VITE_POSITION === 'open' &&
       vueDevTools({ launchEditor: env.VITE_EDITOR }),
-      legacyPlugin({
-        targets: [
-          'Android > 39',
-          'Chrome >= 60',
-          'Safari >= 10.1',
-          'iOS >= 10.3',
-          'Firefox >= 54',
-          'Edge >= 15'
-        ]
-      }),
+      // legacyPlugin 已移除: 内部管理后台不需要旧浏览器兼容，legacy 会让构建时间翻倍
       vuePlugin(),
       svgBuilder(['./src/plugin/', './src/assets/icons/'], base, outDir, 'assets', mode),
       VueFilePathPlugin('./src/pathInfo.json'),

@@ -5,6 +5,7 @@ import (
 
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/common/response"
+	mallService "github.com/flipped-aurora/gin-vue-admin/server/service/mall"
 	"github.com/flipped-aurora/gin-vue-admin/server/utils"
 	"github.com/flipped-aurora/gin-vue-admin/server/wsmanager"
 	"github.com/gin-gonic/gin"
@@ -181,12 +182,11 @@ func (a *MiniRemoteApi) GetOnlineUsers(c *gin.Context) {
 
 // RemoteDoorOpenRequest 远程开门请求
 type RemoteDoorOpenRequest struct {
-	DeviceID string `json:"deviceId" binding:"required"` // 设备ID
-	OpenID   string `json:"openId"`                     // 用户openId（可选，后端也从JWT获取）
-	Duration int    `json:"duration"`                   // 开门持续时间（秒）
+	Id     int64  `json:"id" binding:"required"` // 门锁ID（door_lock表主键）
+	OpenID string `json:"openId"`                // 用户openId（可选，后端也从JWT获取）
 }
 
-// RemoteDoorOpen 远程开门
+// RemoteDoorOpen 远程开门（调用 DoorLockService 完整流程：远程开门→记录历史→同步用户→WS通知门店）
 // @Tags      MiniRemote
 // @Summary   远程开门
 // @Accept    application/json
@@ -201,40 +201,37 @@ func (a *MiniRemoteApi) RemoteDoorOpen(c *gin.Context) {
 		return
 	}
 
-	// 校验用户身份
-	wxUserId := getWxUserIdFromContext(c)
-	if wxUserId == "" {
+	// 优先使用请求中的openId，否则从JWT上下文获取
+	openId := req.OpenID
+	if openId == "" {
+		openId = getWxUserIdFromContext(c)
+	}
+	if openId == "" {
 		response.FailWithMessage("请先登录", c)
 		return
 	}
 
-	if req.Duration <= 0 {
-		req.Duration = 5 // 默认5秒
+	global.GVA_LOG.Info("小程序远程开门",
+		zap.Int64("id", req.Id),
+		zap.String("openId", openId))
+
+	// 调用 DoorLockService.OpenDoor 完整流程：
+	// 1. 校验门锁信息（yardSn/doorGuid）
+	// 2. 调第三方云平台API远程开门
+	// 3. 记录操作历史到 door_lock_history
+	// 4. 查询微信用户信息
+	// 5. 根据门锁查找门店（MxStore）
+	// 6. 查找或创建门店用户（MxUser）
+	// 7. 添加门店成员关系
+	// 8. WebSocket通知门店店长/验光师
+	result, err := mallService.DoorLockServiceApp.OpenDoor(req.Id, openId)
+	if err != nil {
+		global.GVA_LOG.Error("远程开门失败", zap.Error(err))
+		response.FailWithMessage(err.Error(), c)
+		return
 	}
 
-	global.GVA_LOG.Info("远程开门",
-		zap.String("deviceId", req.DeviceID),
-		zap.Int("duration", req.Duration),
-		zap.String("wxUserId", wxUserId))
-
-	if wsmanager.WSManager != nil {
-		// 远程开门：通过设备WebSocket管理器发送命令给设备
-		if utils.DeviceWSManager != nil {
-			sent := utils.DeviceWSManager.SendToDevice(req.DeviceID, map[string]interface{}{
-				"cmd":      "door_open",
-				"deviceId": req.DeviceID,
-				"duration": req.Duration,
-				"userId":   wxUserId,
-			})
-			if !sent {
-				global.GVA_LOG.Warn("远程开门失败：设备不在线", zap.String("deviceId", req.DeviceID))
-				response.FailWithMessage("设备不在线，无法开门", c)
-				return
-			}
-		}
-	}
-
-	response.OkWithMessage("开门命令已发送", c)
+	response.OkWithDetailed(result, "开门成功", c)
 }
 
 // GetRemoteOptometryHealth 获取远程验光服务健康状态

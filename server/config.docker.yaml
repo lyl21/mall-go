@@ -258,6 +258,14 @@ agora:
     app-id: "2f6b3ce648174a48bf50f041f3f50f22"
     app-certificate: "d1d452038c1d46948b9039726f253a4a"
 
+# 第三方门锁平台配置
+door-lock:
+    base-url: "https://yun.andudu.net/dist"
+    username: "18136108622"
+    password: "123456"
+    yard-sn: "786537017627385856"
+    gyscode: "hyzh"
+
 # 微信支付配置
 wechat:
     mini-app-id: wx457a99d69770774d

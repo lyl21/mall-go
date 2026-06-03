@@ -43,10 +43,10 @@ func initBizRouter(routers ...*gin.RouterGroup) {
 		utils.DeviceWSManager.HandleDeviceWS(c.Writer, c.Request)
 	})
 
-	// 验光仪设备WebSocket: ws://IP:PORT/equipment/设备ID（与原始ry逻辑一致：无认证）
-	publicGroup.GET("/equipment/:equipmentId", func(c *gin.Context) {
-		equipmentId := c.Param("equipmentId")
-		utils.DeviceWSManager.HandleDeviceWSByPath(c.Writer, c.Request, equipmentId, "验光仪")
+	// 验光仪设备WebSocket: ws://IP:PORT/ws/optometer/设备ID（与原始ry逻辑一致：无认证）
+	publicGroup.GET("/ws/optometer/:deviceId", func(c *gin.Context) {
+		deviceId := c.Param("deviceId")
+		utils.DeviceWSManager.HandleDeviceWSByPath(c.Writer, c.Request, deviceId, "验光仪")
 	})
 
 	// 牛头APP WebSocket（远控通信 + 设备在线状态同步）

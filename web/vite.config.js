@@ -66,12 +66,8 @@ export default ({ mode }) => {
           target: `${env.VITE_BASE_PATH}:${env.VITE_SERVER_PORT}`,
           ws: true,
           changeOrigin: true
-        },
-        '/equipment': {
-          target: `${env.VITE_BASE_PATH}:${env.VITE_SERVER_PORT}`,
-          ws: true,
-          changeOrigin: true
         }
+      }
       }
     },
     build: {

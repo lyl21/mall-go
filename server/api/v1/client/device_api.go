@@ -13,16 +13,15 @@ import (
 	"go.uber.org/zap"
 )
 
-// fillDownloadUrl 补全下载地址协议+主机+api前缀,避免APP拿到相对路径无法下载
-// 数据库存的是相对路径(如uploads/file/xxx.apk),拼接为https://host/api/uploads/file/xxx.apk
-// 统一走/api路径:Docker Nginx已有/api→8888的rewrite代理,无需额外配置
+// fillDownloadUrl 补全下载地址协议+主机前缀,避免APP拿到相对路径无法下载
+// 数据库存的是相对路径(如uploads/file/xxx.apk),拼接为 https://host/uploads/file/xxx.apk
 func fillDownloadUrl(c *gin.Context, pkg *store.InstallingPackage) {
 	if pkg.Url != "" && !strings.HasPrefix(pkg.Url, "http") {
 		scheme := "http"
 		if c.Request.TLS != nil || c.GetHeader("X-Forwarded-Proto") == "https" {
 			scheme = "https"
 		}
-		pkg.Url = scheme + "://" + c.Request.Host + "/api/" + pkg.Url
+		pkg.Url = scheme + "://" + c.Request.Host + "/" + pkg.Url
 	}
 }
 

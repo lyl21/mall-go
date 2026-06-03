@@ -68,7 +68,6 @@ export default ({ mode }) => {
           changeOrigin: true
         }
       }
-      }
     },
     build: {
       // esbuild target: 降级ES2020+语法(如???.),避免旧浏览器白屏

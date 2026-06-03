@@ -18,7 +18,7 @@ func holder(routers ...*gin.RouterGroup) {
 	_ = router.RouterGroupApp
 }
 
-func initBizRouter(routers ...*gin.RouterGroup) {
+func initBizRouter(engine *gin.Engine, routers ...*gin.RouterGroup) {
 	privateGroup := routers[0]
 	publicGroup := routers[1]
 
@@ -37,6 +37,65 @@ func initBizRouter(routers ...*gin.RouterGroup) {
 	wsmanager.WSManager = ws.NewManager()
 	wsmanager.WSManager.StartHeartbeatCheck()
 	wsmanager.WSManager.StartSessionCleanup()
+
+	// ============================================================
+	// 注册无前缀WebSocket路由: Docker Nginx /ws直连Go Server,
+	// 不经过/api前缀,避免WebSocket走API路径语义不清晰
+	// ============================================================
+	wsGroup := engine.Group("")
+	{
+		// 设备WebSocket（后台管理端）
+		wsGroup.GET("/ws/device", func(c *gin.Context) {
+			utils.DeviceWSManager.HandleDeviceWS(c.Writer, c.Request)
+		})
+		// 验光仪设备WebSocket
+		wsGroup.GET("/ws/optometer/:deviceId", func(c *gin.Context) {
+			deviceId := c.Param("deviceId")
+			utils.DeviceWSManager.HandleDeviceWSByPath(c.Writer, c.Request, deviceId, "验光仪")
+		})
+		// 牛头APP WebSocket
+		wsGroup.GET("/ws/user/:userId", func(c *gin.Context) {
+			userIdStr := c.Param("userId")
+			userId, err := strconv.ParseInt(userIdStr, 10, 64)
+			if err != nil {
+				c.JSON(400, gin.H{"error": "invalid userId"})
+				return
+			}
+			var storeId string
+			var userType string
+			var member storeModel.MxStoreMember
+			if err := global.GVA_DB.Where("user_id = ? AND is_delete = ?", userId, 0).First(&member).Error; err == nil {
+				storeId = strconv.FormatInt(member.StoreId, 10)
+				switch member.Post {
+				case 1:
+					userType = "manager"
+				case 2:
+					userType = "optometrist"
+				case 3:
+					userType = "customer"
+				default:
+					userType = "customer"
+				}
+			} else {
+				userType = "customer"
+				storeId = ""
+			}
+			if userType == "optometrist" {
+				utils.EnsureDeviceRecord(userIdStr, "牛头control", member.Username)
+				utils.SyncDeviceStatus(userIdStr, 1)
+				go func() {
+					wsmanager.WSManager.HandleWebSocketWithStrIDAndInfo(c.Writer, c.Request, userIdStr, userType, storeId)
+					utils.SyncDeviceStatus(userIdStr, 0)
+				}()
+				return
+			}
+			wsmanager.WSManager.HandleWebSocketWithStrIDAndInfo(c.Writer, c.Request, userIdStr, userType, storeId)
+		})
+		// 音视频WebSocket
+		wsGroup.GET("/ws/agora", func(c *gin.Context) {
+			utils.AgoraWSManager.HandleAgoraWS(c.Writer, c.Request)
+		})
+	}
 
 	// 注册设备WebSocket路由（后台管理端连接，与原始ry逻辑一致：无额外认证）
 	publicGroup.GET("/ws/device", func(c *gin.Context) {

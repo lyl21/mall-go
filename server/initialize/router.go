@@ -108,7 +108,7 @@ func Routers() *gin.Engine {
 	InstallPlugin(PrivateGroup, PublicGroup, Router)
 
 	// 注册业务路由
-	initBizRouter(PrivateGroup, PublicGroup)
+	initBizRouter(Router, PrivateGroup, PublicGroup)
 
 	global.GVA_ROUTERS = Router.Routes()
 

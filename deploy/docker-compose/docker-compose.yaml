@@ -54,6 +54,8 @@ services:
       - ./config/config.docker.yaml:/go/src/github.com/flipped-aurora/gin-vue-admin/server/config.docker.yaml
       - /home/XM/wxPay/apiclient_cert.p12:/go/src/github.com/flipped-aurora/gin-vue-admin/server/wxpay/apiclient_cert.p12
       - /home/XM/wxPay/apiclient_key.pem:/go/src/github.com/flipped-aurora/gin-vue-admin/server/wxpay/apiclient_key.pem
+      # 持久化上传文件目录,防止容器重建后文件丢失
+      - /home/XM/uploads/file:/go/src/github.com/flipped-aurora/gin-vue-admin/server/uploads/file
 
   mysql:
     image: mysql:8.0.21       # 如果您是 arm64 架构：如 MacOS 的 M1，请修改镜像为 image: mysql/mysql-server:8.0.21

@@ -1,6 +1,7 @@
 package client
 
 import (
+	"strings"
 	"time"
 
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
@@ -11,6 +12,18 @@ import (
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
+
+// fillDownloadUrl 补全下载地址协议+主机前缀,避免APP拿到相对路径无法下载
+// 数据库存的是相对路径(如uploads/file/xxx.apk),需拼接为完整URL
+func fillDownloadUrl(c *gin.Context, pkg *store.InstallingPackage) {
+	if pkg.Url != "" && !strings.HasPrefix(pkg.Url, "http") {
+		scheme := "http"
+		if c.Request.TLS != nil || c.GetHeader("X-Forwarded-Proto") == "https" {
+			scheme = "https"
+		}
+		pkg.Url = scheme + "://" + c.Request.Host + "/" + pkg.Url
+	}
+}
 
 // ClientDeviceApi APP设备管理API
 type ClientDeviceApi struct{}
@@ -29,6 +42,7 @@ func (a *ClientDeviceApi) GetAppVersion(c *gin.Context) {
 		ClientFailWithMessage("获取失败", c)
 		return
 	}
+	fillDownloadUrl(c, &pkg)
 	ClientOkWithData(pkg, c)
 }
 
@@ -46,6 +60,7 @@ func (a *ClientDeviceApi) GetKeyboardVersion(c *gin.Context) {
 		ClientFailWithMessage("获取失败", c)
 		return
 	}
+	fillDownloadUrl(c, &pkg)
 	ClientOkWithData(pkg, c)
 }
 
@@ -63,6 +78,7 @@ func (a *ClientDeviceApi) GetOptometerVersion(c *gin.Context) {
 		ClientFailWithMessage("获取失败", c)
 		return
 	}
+	fillDownloadUrl(c, &pkg)
 	ClientOkWithData(pkg, c)
 }
 
@@ -80,6 +96,7 @@ func (a *ClientDeviceApi) GetOptometerManualVersion(c *gin.Context) {
 		ClientFailWithMessage("获取失败", c)
 		return
 	}
+	fillDownloadUrl(c, &pkg)
 	ClientOkWithData(pkg, c)
 }
 

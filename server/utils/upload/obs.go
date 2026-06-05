@@ -12,6 +12,11 @@ var HuaWeiObs = new(Obs)
 
 type Obs struct{}
 
+// UploadFileWithFolder 华为OBS上传文件到指定子目录（暂不支持folder，降级为UploadFile）
+func (o *Obs) UploadFileWithFolder(file *multipart.FileHeader, folder string) (string, string, error) {
+	return o.UploadFile(file)
+}
+
 func NewHuaWeiObsClient() (client *obs.ObsClient, err error) {
 	return obs.New(global.GVA_CONFIG.HuaWeiObs.AccessKey, global.GVA_CONFIG.HuaWeiObs.SecretKey, global.GVA_CONFIG.HuaWeiObs.Endpoint)
 }

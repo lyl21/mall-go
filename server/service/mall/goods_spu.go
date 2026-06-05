@@ -42,7 +42,7 @@ func (s *GoodsSpuService) DeleteGoodsSpuByIds(ids []string) (err error) {
 }
 
 func (s *GoodsSpuService) UpdateGoodsSpu(spu mallModel.GoodsSpu) (err error) {
-	err = global.GVA_DB.Select("name", "sell_point", "description", "category_first", "category_second", "pic_urls", "shelf", "sort", "sales_price", "market_price", "cost_price", "stock", "sales_num").Where("id = ?", spu.Id).Updates(&spu).Error
+	err = global.GVA_DB.Select("name", "sell_point", "description", "category_first", "category_second", "tag", "pic_urls", "shelf", "sort", "sales_price", "market_price", "cost_price", "stock", "sales_num").Where("id = ?", spu.Id).Updates(&spu).Error
 	return err
 }
 
@@ -83,6 +83,7 @@ func (s *GoodsSpuService) GetGoodsSpuList(info request.PageInfo, name string, ca
 		spuMap["description"] = spu.Description
 		spuMap["categoryFirst"] = spu.CategoryFirst
 		spuMap["categorySecond"] = spu.CategorySecond
+		spuMap["tag"] = parseTagToArray(spu.Tag)
 		spuMap["picUrls"] = parsePicUrlsToArray(spu.PicUrls)
 		spuMap["shelf"] = spu.Shelf
 		spuMap["sort"] = spu.Sort
@@ -128,6 +129,30 @@ func parsePicUrlsToArray(picUrls string) []string {
 
 	// 尝试按逗号分隔
 	parts := strings.Split(picUrls, ",")
+	result := make([]string, 0, len(parts))
+	for _, p := range parts {
+		p = strings.TrimSpace(p)
+		if p != "" {
+			result = append(result, p)
+		}
+	}
+	return result
+}
+
+// parseTagToArray 将 tag 从逗号分隔字符串解析为数组
+// 数据库中 tag 存储为逗号分隔字符串如 '国产,进口'
+// 前端使用 scope.row.tag.split(',') 访问，需要返回数组避免前端报错
+func parseTagToArray(tag string) []string {
+	if tag == "" {
+		return []string{}
+	}
+	// 尝试解析为 JSON 数组（兼容已存为数组格式的情况）
+	var tags []string
+	if err := json.Unmarshal([]byte(tag), &tags); err == nil && len(tags) > 0 {
+		return tags
+	}
+	// 按逗号分隔
+	parts := strings.Split(tag, ",")
 	result := make([]string, 0, len(parts))
 	for _, p := range parts {
 		p = strings.TrimSpace(p)

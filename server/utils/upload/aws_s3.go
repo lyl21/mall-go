@@ -19,6 +19,11 @@ import (
 
 type AwsS3 struct{}
 
+// UploadFileWithFolder AWS S3上传文件到指定子目录（暂不支持folder，降级为UploadFile）
+func (a *AwsS3) UploadFileWithFolder(file *multipart.FileHeader, folder string) (string, string, error) {
+	return a.UploadFile(file)
+}
+
 //@author: [WqyJh](https://github.com/WqyJh)
 //@object: *AwsS3
 //@function: UploadFile

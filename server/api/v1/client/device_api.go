@@ -170,38 +170,55 @@ func (a *ClientDeviceApi) RegisterDevice(c *gin.Context) {
 	ClientOkWithData(device, c)
 }
 
+// buildFullURL 根据请求上下文和相对路径构建完整URL
+func buildFullURL(c *gin.Context, relativePath string) string {
+	if relativePath == "" {
+		return ""
+	}
+	scheme := "http"
+	if c.Request.TLS != nil || c.GetHeader("X-Forwarded-Proto") == "https" {
+		scheme = "https"
+	}
+	return scheme + "://" + c.Request.Host + "/" + relativePath
+}
+
 // UploadErrorLog 上传错误日志（与ry原始逻辑一致：文件上传方式）
 // @Tags      ClientDevice
 // @Summary   设备上传错误日志
 // @Accept    multipart/form-data
 // @Produce   application/json
 // @Param     equipmentID  formData  string                  true  "设备ID"
+// @Param     folder       formData  string                  false "存储子目录（如 logs），为空则存根目录"
 // @Param     file         formData  file                    true  "日志文件"
 // @Success   200          {object}  response.Response{msg=string}  "上传成功"
 // @Router    /client/code/upload [post]
 func (a *ClientDeviceApi) UploadErrorLog(c *gin.Context) {
 	// 与ry原始MxActivationCodeController.uploadFile一致：表单方式接收equipmentID和文件
 	equipmentID := c.PostForm("equipmentID")
+	folder := c.PostForm("folder")
 	file, err := c.FormFile("file")
 	if err != nil {
 		ClientFailWithMessage("日志文件为空", c)
 		return
 	}
 
-	// 使用项目统一的文件上传工具保存文件
+	// 使用统一上传工具保存文件，通过folder参数控制子目录
 	oss := upload.NewOss()
-	filePath, _, uploadErr := oss.UploadFile(file)
+	relativePath, _, uploadErr := oss.UploadFileWithFolder(file, folder)
 	if uploadErr != nil {
 		global.GVA_LOG.Error("上传错误日志文件失败", zap.Error(uploadErr))
 		ClientFailWithMessage("上传失败", c)
 		return
 	}
 
+	// 构建完整URL存入数据库（与ry一致：serverConfig.getUrl() + upload）
+	fullURL := buildFullURL(c, relativePath)
+
 	// 记录到数据库
 	log := store.ErrorReportLog{
 		LogId:       uuid.New().String(),
 		EquipmentId: equipmentID,
-		LogPath:     filePath,
+		LogPath:     fullURL,
 	}
 
 	if err := global.GVA_DB.Create(&log).Error; err != nil {
@@ -210,5 +227,5 @@ func (a *ClientDeviceApi) UploadErrorLog(c *gin.Context) {
 		return
 	}
 
-	ClientOkWithMessage("日志上传成功:"+filePath, c)
+	ClientOkWithMessage("日志上传成功:"+relativePath, c)
 }

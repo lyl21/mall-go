@@ -17,6 +17,11 @@ import (
 
 type TencentCOS struct{}
 
+// UploadFileWithFolder 腾讯云COS上传文件到指定子目录（暂不支持folder，降级为UploadFile）
+func (t *TencentCOS) UploadFileWithFolder(file *multipart.FileHeader, folder string) (string, string, error) {
+	return t.UploadFile(file)
+}
+
 // UploadFile upload file to COS
 func (*TencentCOS) UploadFile(file *multipart.FileHeader) (string, string, error) {
 	client := NewClient()

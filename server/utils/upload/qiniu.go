@@ -24,6 +24,11 @@ type Qiniu struct{}
 //@param: file *multipart.FileHeader
 //@return: string, string, error
 
+// UploadFileWithFolder 七牛云上传文件到指定子目录（暂不支持folder，降级为UploadFile）
+func (q *Qiniu) UploadFileWithFolder(file *multipart.FileHeader, folder string) (string, string, error) {
+	return q.UploadFile(file)
+}
+
 func (*Qiniu) UploadFile(file *multipart.FileHeader) (string, string, error) {
 	putPolicy := storage.PutPolicy{Scope: global.GVA_CONFIG.Qiniu.Bucket}
 	mac := qbox.NewMac(global.GVA_CONFIG.Qiniu.AccessKey, global.GVA_CONFIG.Qiniu.SecretKey)

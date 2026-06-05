@@ -52,6 +52,11 @@ func GetMinio(endpoint, accessKeyID, secretAccessKey, bucketName string, useSSL 
 	return MinioClient, nil
 }
 
+// UploadFileWithFolder Minio上传文件到指定子目录（暂不支持folder，降级为UploadFile）
+func (m *Minio) UploadFileWithFolder(file *multipart.FileHeader, folder string) (string, string, error) {
+	return m.UploadFile(file)
+}
+
 func (m *Minio) UploadFile(file *multipart.FileHeader) (filePathres, key string, uploadErr error) {
 	f, openError := file.Open()
 	// mutipart.File to os.File

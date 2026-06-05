@@ -11,6 +11,9 @@ import (
 // Author [ccfish86](https://github.com/ccfish86)
 type OSS interface {
 	UploadFile(file *multipart.FileHeader) (string, string, error)
+	// UploadFileWithFolder 上传文件到指定子目录，folder为相对StorePath的子路径（如 "logs"）
+	// 文件名格式：原文件名_日期.后缀（保留原始文件名，方便识别）
+	UploadFileWithFolder(file *multipart.FileHeader, folder string) (string, string, error)
 	DeleteFile(key string) error
 }
 

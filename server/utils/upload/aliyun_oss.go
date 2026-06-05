@@ -12,6 +12,11 @@ import (
 
 type AliyunOSS struct{}
 
+// UploadFileWithFolder 阿里云OSS上传文件到指定子目录（暂不支持folder，降级为UploadFile）
+func (a *AliyunOSS) UploadFileWithFolder(file *multipart.FileHeader, folder string) (string, string, error) {
+	return a.UploadFile(file)
+}
+
 func (*AliyunOSS) UploadFile(file *multipart.FileHeader) (string, string, error) {
 	bucket, err := NewBucket()
 	if err != nil {

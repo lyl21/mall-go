@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
-	"github.com/flipped-aurora/gin-vue-admin/server/utils"
 	"go.uber.org/zap"
 )
 
@@ -29,22 +28,44 @@ type Local struct{}
 //@return: string, string, error
 
 func (*Local) UploadFile(file *multipart.FileHeader) (string, string, error) {
+	return uploadToLocal(file, "")
+}
+
+// UploadFileWithFolder 上传文件到指定子目录
+// folder为相对StorePath的子路径（如 "logs"），为空时等同于UploadFile
+// 文件名格式：原文件名_日期.后缀（保留原始文件名，方便识别）
+func (*Local) UploadFileWithFolder(file *multipart.FileHeader, folder string) (string, string, error) {
+	return uploadToLocal(file, folder)
+}
+
+// uploadToLocal 本地文件上传的统一实现
+// folder为相对StorePath的子路径，为空时保存到StorePath根目录
+// 文件名格式：原文件名_日期.后缀
+func uploadToLocal(file *multipart.FileHeader, folder string) (string, string, error) {
 	// 读取文件后缀
 	ext := filepath.Ext(file.Filename)
-	// 读取文件名并加密
+	// 读取文件名（保留原始文件名，方便识别）
 	name := strings.TrimSuffix(file.Filename, ext)
-	name = utils.MD5V([]byte(name))
-	// 拼接新文件名
+	// 拼接新文件名：原文件名_日期.后缀
 	filename := name + "_" + time.Now().Format("20060102150405") + ext
+
+	// 计算存储目录
+	storeDir := global.GVA_CONFIG.Local.StorePath
+	pathDir := global.GVA_CONFIG.Local.Path
+	if folder != "" {
+		storeDir = storeDir + "/" + folder
+		pathDir = pathDir + "/" + folder
+	}
+
 	// 尝试创建此路径
-	mkdirErr := os.MkdirAll(global.GVA_CONFIG.Local.StorePath, os.ModePerm)
+	mkdirErr := os.MkdirAll(storeDir, os.ModePerm)
 	if mkdirErr != nil {
 		global.GVA_LOG.Error("function os.MkdirAll() failed", zap.Any("err", mkdirErr.Error()))
 		return "", "", errors.New("function os.MkdirAll() failed, err:" + mkdirErr.Error())
 	}
 	// 拼接路径和文件名
-	p := global.GVA_CONFIG.Local.StorePath + "/" + filename
-	filepath := global.GVA_CONFIG.Local.Path + "/" + filename
+	p := storeDir + "/" + filename
+	filepath := pathDir + "/" + filename
 
 	f, openError := file.Open() // 读取文件
 	if openError != nil {

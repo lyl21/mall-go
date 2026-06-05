@@ -18,6 +18,11 @@ import (
 
 type CloudflareR2 struct{}
 
+// UploadFileWithFolder Cloudflare R2上传文件到指定子目录（暂不支持folder，降级为UploadFile）
+func (c *CloudflareR2) UploadFileWithFolder(file *multipart.FileHeader, folder string) (string, string, error) {
+	return c.UploadFile(file)
+}
+
 func (c *CloudflareR2) UploadFile(file *multipart.FileHeader) (fileUrl string, fileName string, err error) {
 	client := c.newR2Client()
 	uploader := manager.NewUploader(client)

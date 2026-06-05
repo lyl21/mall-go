@@ -13,6 +13,7 @@ type GoodsSpu struct {
 	Description    string          `json:"description" gorm:"column:description;type:text;not null;comment:描述"`
 	CategoryFirst  string          `json:"categoryFirst" gorm:"column:category_first;type:varchar(32);not null;comment:一级分类ID"`
 	CategorySecond *string         `json:"categorySecond" gorm:"column:category_second;type:varchar(32);comment:二级分类ID"`
+	Tag            string          `json:"tag" gorm:"column:tag;type:varchar(255);comment:标签"`
 	PicUrls        string          `json:"picUrls" gorm:"column:pic_urls;type:varchar(1024);not null;default:'';comment:商品图片"`
 	Shelf          int             `json:"shelf" gorm:"column:shelf;type:char(2);not null;default:0;comment:是否上架（1是 0否）"`
 	Sort           int             `json:"sort" gorm:"column:sort;not null;default:0;comment:排序字段"`

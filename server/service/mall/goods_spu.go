@@ -83,7 +83,7 @@ func (s *GoodsSpuService) GetGoodsSpuList(info request.PageInfo, name string, ca
 		spuMap["description"] = spu.Description
 		spuMap["categoryFirst"] = spu.CategoryFirst
 		spuMap["categorySecond"] = spu.CategorySecond
-		spuMap["tag"] = spu.Tag
+		spuMap["tag"] = parseTagToArray(spu.Tag)
 		spuMap["picUrls"] = parsePicUrlsToArray(spu.PicUrls)
 		spuMap["shelf"] = spu.Shelf
 		spuMap["sort"] = spu.Sort
@@ -129,6 +129,29 @@ func parsePicUrlsToArray(picUrls string) []string {
 
 	// 尝试按逗号分隔
 	parts := strings.Split(picUrls, ",")
+	result := make([]string, 0, len(parts))
+	for _, p := range parts {
+		p = strings.TrimSpace(p)
+		if p != "" {
+			result = append(result, p)
+		}
+	}
+	return result
+}
+
+// parseTagToArray 将 tag 从逗号分隔字符串解析为数组
+// 数据库中 tag 存储为逗号分隔字符串如 '国产,进口'，前端统一使用数组
+func parseTagToArray(tag string) []string {
+	if tag == "" {
+		return []string{}
+	}
+	// 兼容已存为 JSON 数组格式的情况
+	var tags []string
+	if err := json.Unmarshal([]byte(tag), &tags); err == nil && len(tags) > 0 {
+		return tags
+	}
+	// 按逗号分隔
+	parts := strings.Split(tag, ",")
 	result := make([]string, 0, len(parts))
 	for _, p := range parts {
 		p = strings.TrimSpace(p)
